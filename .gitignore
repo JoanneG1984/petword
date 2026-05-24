@@ -1,0 +1,33 @@
+# OCR scratch files generated while importing textbook images
+ocr_day*.jpg
+ocr_day*.jpeg
+ocr_day*.png
+ocr_day*.webp
+ocr_day*.txt
+
+# Temporary copied source images
+Day*.jpg
+Day*.jpeg
+Day*.png
+Day*.webp
+DAY*.jpg
+DAY*.jpeg
+DAY*.png
+DAY*.webp
+
+# Local helper scripts used during one-off OCR extraction
+parse_ocr_words.js
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Dependency/build folders if this static site later grows
+node_modules/
+dist/
+build/
+.netlify/
+.vercel/

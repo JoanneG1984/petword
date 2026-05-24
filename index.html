@@ -1,0 +1,1398 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day 19 单词闯关</title>
+  <style>
+    :root {
+      --ink: #263238;
+      --muted: #66757f;
+      --paper: #fffdf8;
+      --line: #dfe8e3;
+      --mint: #53b788;
+      --mint-dark: #24795a;
+      --sun: #ffbe4d;
+      --rose: #ff6b6b;
+      --sky: #4dabf7;
+      --violet: #7b61ff;
+      --shadow: 0 16px 36px rgba(35, 71, 61, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(255, 190, 77, .24), transparent 24%),
+        radial-gradient(circle at 82% 8%, rgba(77, 171, 247, .22), transparent 25%),
+        linear-gradient(135deg, #f2fff8 0%, #fff8ec 52%, #eff7ff 100%);
+      min-height: 100vh;
+    }
+
+    button, input { font: inherit; }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 36px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .hero {
+      min-height: 178px;
+      border: 1px solid rgba(83, 183, 136, .28);
+      border-radius: 8px;
+      background:
+        linear-gradient(120deg, rgba(255, 255, 255, .9), rgba(255, 255, 255, .64)),
+        url("data:image/svg+xml,%3Csvg width='900' height='260' viewBox='0 0 900 260' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='900' height='260' fill='%23f6fff8'/%3E%3Cpath d='M0 205c82-36 153-37 213-3 64 36 124 33 181-2 68-41 137-39 205 8 68 46 151 42 301-18v70H0z' fill='%23b9ead2'/%3E%3Cpath d='M83 167h76l38 53H43z' fill='%234dabf7'/%3E%3Cpath d='M116 123h74l40 97h-42z' fill='%23ffd166'/%3E%3Cpath d='M557 128h164v92H557z' fill='%23ffffff'/%3E%3Cpath d='M585 160h39v60h-39zM654 160h39v60h-39z' fill='%238bd8bd'/%3E%3Ccircle cx='745' cy='202' r='18' fill='%2324795a'/%3E%3Ccircle cx='807' cy='202' r='18' fill='%2324795a'/%3E%3Cpath d='M728 154h87l31 43H707z' fill='%23ffbe4d'/%3E%3Cpath d='M352 171c18-32 39-32 58 0 25-49 58-49 88 0z' fill='%237b61ff' opacity='.75'/%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hero-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .user-panel {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid rgba(36, 121, 90, .18);
+      background: rgba(255, 255, 255, .82);
+      border-radius: 8px;
+      padding: 8px;
+      min-width: min(100%, 360px);
+    }
+
+    .user-panel span {
+      color: var(--muted);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .user-panel input,
+    .user-panel select {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 10px;
+      flex: 1;
+      min-width: 90px;
+      background: white;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      letter-spacing: 0;
+      line-height: 1.08;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      max-width: 620px;
+      line-height: 1.6;
+    }
+
+    .status {
+      border-radius: 8px;
+      border: 1px solid rgba(38, 50, 56, .1);
+      background: rgba(255, 255, 255, .78);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-height: 178px;
+    }
+
+    .stat {
+      border-radius: 8px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      padding: 14px;
+      min-width: 0;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1.1;
+      color: var(--mint-dark);
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .tab {
+      border: 1px solid rgba(36, 121, 90, .22);
+      background: rgba(255, 255, 255, .76);
+      border-radius: 8px;
+      padding: 13px 12px;
+      cursor: pointer;
+      color: var(--mint-dark);
+      font-weight: 700;
+      min-height: 50px;
+      transition: transform .15s ease, background .15s ease, color .15s ease;
+    }
+
+    .tab:hover { transform: translateY(-1px); }
+
+    .tab.active {
+      background: var(--mint);
+      color: white;
+      border-color: var(--mint);
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel, .side {
+      border-radius: 8px;
+      border: 1px solid rgba(38, 50, 56, .1);
+      background: rgba(255, 255, 255, .86);
+      box-shadow: var(--shadow);
+    }
+
+    .panel { min-height: 520px; padding: 22px; }
+    .side { padding: 18px; }
+
+    .section-title {
+      margin: 0 0 16px;
+      font-size: 22px;
+    }
+
+    .side-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .side-head .section-title { margin: 0; }
+
+    .small-btn {
+      border: 1px solid var(--line);
+      background: #e7f8ef;
+      color: var(--mint-dark);
+      border-radius: 8px;
+      cursor: pointer;
+      min-height: 36px;
+      padding: 7px 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .download-status {
+      min-height: 24px;
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .download-status a {
+      color: #1464a5;
+      font-weight: 800;
+    }
+
+    .download-status textarea {
+      width: 100%;
+      min-height: 130px;
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      resize: vertical;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .download-status button {
+      margin-top: 8px;
+    }
+
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .word-card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 128px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .word-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .word {
+      color: var(--mint-dark);
+      font-size: 21px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .phonetic { color: var(--muted); font-size: 13px; }
+    .meaning { font-weight: 700; }
+    .example { color: var(--muted); line-height: 1.55; font-size: 16px; }
+    .example-zh { color: #45625a; line-height: 1.5; font-size: 15px; }
+
+    .icon-btn, .btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 8px;
+      min-height: 42px;
+      transition: transform .12s ease, opacity .12s ease;
+    }
+
+    .icon-btn {
+      width: 42px;
+      flex: 0 0 42px;
+      background: #e7f8ef;
+      color: var(--mint-dark);
+      font-size: 20px;
+    }
+
+    .btn {
+      background: var(--ink);
+      color: white;
+      padding: 10px 16px;
+      font-weight: 800;
+    }
+
+    .btn.secondary { background: #e9f5ff; color: #1464a5; }
+    .btn.sun { background: var(--sun); color: #4b3210; }
+    .btn.rose { background: var(--rose); }
+    .btn:disabled { opacity: .48; cursor: not-allowed; }
+    .icon-btn:hover, .btn:hover { transform: translateY(-1px); }
+
+    .quiz {
+      display: grid;
+      gap: 18px;
+    }
+
+    .prompt {
+      border-radius: 8px;
+      background: #f5fff8;
+      border: 1px dashed rgba(36, 121, 90, .35);
+      padding: 22px;
+      min-height: 170px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      text-align: center;
+      gap: 12px;
+    }
+
+    .big-word {
+      font-size: clamp(30px, 5vw, 58px);
+      line-height: 1.1;
+      color: var(--mint-dark);
+      font-weight: 900;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+    }
+
+    .prompt-label {
+      font-size: clamp(18px, 2.5vw, 29px);
+    }
+
+    .prompt small { color: var(--muted); font-size: 15px; }
+
+    .choices {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .choice {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 8px;
+      min-height: 72px;
+      padding: 12px;
+      cursor: pointer;
+      text-align: left;
+      line-height: 1.42;
+      font-weight: 700;
+    }
+
+    .choice.correct { border-color: var(--mint); background: #e9fff2; }
+    .choice.wrong { border-color: var(--rose); background: #fff0f0; }
+
+    .answer-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      width: 100%;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      min-height: 50px;
+      padding: 0 14px;
+      outline: 0;
+      background: white;
+    }
+
+    input[type="text"]:focus { border-color: var(--sky); }
+
+    .feedback {
+      min-height: 28px;
+      font-weight: 800;
+      color: var(--mint-dark);
+    }
+
+    .progress {
+      height: 12px;
+      background: #edf2ee;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 10px 0 16px;
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--mint), var(--sun));
+      transition: width .25s ease;
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 8px;
+      max-height: 340px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .mini-word {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .badge {
+      border-radius: 999px;
+      background: #eef7ff;
+      color: #1464a5;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .filter {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .filter.active {
+      background: #e7f8ef;
+      color: var(--mint-dark);
+      border-color: rgba(36, 121, 90, .25);
+    }
+
+    .confetti {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 3;
+    }
+
+    .piece {
+      position: absolute;
+      width: 10px;
+      height: 16px;
+      top: -18px;
+      animation: fall 1.1s ease-in forwards;
+    }
+
+    @keyframes fall {
+      to { transform: translateY(105vh) rotate(520deg); opacity: .2; }
+    }
+
+    @media (max-width: 860px) {
+      .topbar, .main { grid-template-columns: 1fr; }
+      .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .choices { grid-template-columns: 1fr; }
+      .panel { min-height: 440px; }
+    }
+
+    @media (max-width: 540px) {
+      .app { width: min(100% - 20px, 1180px); padding-top: 12px; }
+      .hero, .panel, .side { padding: 16px; }
+      .status { grid-template-columns: 1fr 1fr; padding: 12px; }
+      .stat strong { font-size: 22px; }
+      .tab { padding: 10px 8px; font-size: 14px; }
+      .answer-row { flex-direction: column; align-items: stretch; }
+      .hero-tools, .user-panel { align-items: stretch; flex-direction: column; }
+      .user-panel { width: 100%; }
+      .side-head { align-items: flex-start; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="confetti" id="confetti"></div>
+  <main class="app">
+    <section class="topbar">
+      <div class="hero">
+        <div>
+          <h1 id="appTitle">Day 19 旅行单词闯关</h1>
+          <p class="subtitle">听发音、选中文、拼单词、做听写。每一关都会记录掌握度，错词会自动进“再练一遍”。</p>
+        </div>
+        <div class="hero-tools">
+          <button class="btn sun" id="dailyMission">开始综合挑战</button>
+          <div class="user-panel">
+            <span>Day</span>
+            <select id="daySelect" aria-label="选择单词 Day"></select>
+          </div>
+          <div class="user-panel">
+            <span>User ID</span>
+            <input id="userIdInput" type="text" autocomplete="off" placeholder="例如 Amy 或 001">
+            <button class="btn secondary" id="switchUser">切换</button>
+          </div>
+        </div>
+      </div>
+      <aside class="status">
+        <div class="stat"><strong id="score">0</strong><span>今日星星</span></div>
+        <div class="stat"><strong id="streak">0</strong><span>连续答对</span></div>
+        <div class="stat"><strong id="mastered">0</strong><span>已掌握</span></div>
+        <div class="stat"><strong id="left">0</strong><span>待攻克</span></div>
+      </aside>
+    </section>
+
+    <nav class="tabs" aria-label="练习模式">
+      <button class="tab active" data-view="cards">词卡</button>
+      <button class="tab" data-view="combined">综合练习</button>
+      <button class="tab" data-view="spelling">拼写训练</button>
+      <button class="tab" data-view="radar">复习雷达</button>
+      <button class="tab" data-view="wrongbook">错题集</button>
+    </nav>
+
+    <section class="main">
+      <div class="panel" id="panel"></div>
+    </section>
+  </main>
+
+  <script>
+    function makeWords(items) {
+      return items.map(([word, zh, pos = ""]) => ({
+        word,
+        pos,
+        zh,
+        example: `${word} means ${zh}.`,
+        exampleZh: `${word} 的意思是${zh}。`
+      }));
+    }
+
+    const wordSets = {
+      day1: { label: "Day 1", title: "Day 1 单词闯关", words: makeWords([
+        ["wedding","婚礼"],["vase","花瓶"],["unusual","特别的；不寻常的"],["chest of drawers","衣柜；五斗柜"],["rug","小地毯；厚毯子"],["cushion","垫子"],["marriage","结婚；婚姻"],["ceremony","典礼；仪式"],["childhood","童年"],["honeymoon","蜜月"],["occasion","时机；重大场合"],["neither","两者都不"],["rent","租金；租用；出租"],["location","位置；地点"],["cottage","小屋；村舍"],["antique","古老的；古董"],["cosy","温暖舒适的"],["casual","非正式的"],["meanwhile","同时；在此期间"],["surround","围绕；包围"],["romance","恋爱；浪漫"],["tower","塔；塔楼"],["locate","找出准确位置"],["district","区域；地区"],["in love","相爱；恋爱中"],["appearance","外貌；外观"],["marry","结婚；嫁；娶"],["hand-held","手提式的；便携式的"],["rose","玫瑰花"],["meaning","意义；含义"],["sleep","睡眠；睡觉"],["board","板；木板"],["name","命名；名字"],["seat","座位"],["decorate","装饰"],["curly","卷曲的"],["mention","提到"],["nightmare","噩梦"],["break in","打断；强行进入"],["twin","双胞胎之一"],["nephew","侄子；外甥"],["niece","侄女；外甥女"]
+      ]) },
+      day2: { label: "Day 2", title: "Day 2 单词闯关", words: makeWords([
+        ["bride","新娘"],["handsome","英俊的"],["cheek","面颊；脸颊"],["fountain","喷泉"],["mate","朋友；同伴"],["ladder","梯子"],["mend","修理；好转"],["loan","贷款；借款"],["property","财产；房地产"],["flatmate","合住公寓者"],["kid","孩子"],["bath","洗澡"],["apartment block","公寓大楼"],["dustbin","垃圾箱"],["bulb","电灯泡"],["repair","修理"],["pipe","管子；管道"],["electrical","电的；用电的"],["heater","加热器"],["microwave","微波炉"],["freezer","冷冻柜"],["situated","位于；坐落在"],["neighbourhood","街区；附近"],["tube","伦敦地铁"],["line","铁道；线条"],["balcony","阳台"],["look up","仰望；查阅"],["occasionally","偶尔"],["lock","锁；锁上"],["alarm","闹钟；警报器"],["ground","地面"],["dust","灰尘"],["dishwasher","洗碗机"],["kettle","水壶"],["air conditioning","空调"],["central heating","中央暖气"],["load","负载；沉重感"],["bring up","提出；养育"],["messy","凌乱的"],["dusty","布满灰尘的"],["tidy up","收拾；整理"]
+      ]) },
+      day3: { label: "Day 3", title: "Day 3 单词闯关", words: makeWords([
+        ["qualified","合格的；有资格的"],["education","教育"],["expert","专家；行家"],["familiar","熟悉的；常见的"],["basic","基本的；基础的"],["law","法律；规律"],["attend","出席；参加"],["primary","主要的；小学的"],["secondary school","中学"],["drama","戏剧"],["economics","经济学"],["graduation","毕业；毕业典礼"],["certificate","证明；证书"],["choice","选择"],["keep on","继续"],["essential","必要的；基本的"],["knowledge","知识；学问"],["grammar","语法"],["vocabulary","词汇；词汇量"],["topic","话题"],["nature studies","自然课"],["curriculum","课程"],["literature","文学"],["arithmetic","算术"],["technology","科技"],["engineering","工程；工程学"],["entry","进入；入口"],["research","研究；调查"],["fee","费用"],["grant","拨款；补助金"],["break","间歇；休息"],["questionnaire","问卷"],["hand out","分发"]
+      ]) },
+      day4: { label: "Day 4", title: "Day 4 单词闯关", words: makeWords([
+        ["elementary","初级的；基础的"],["ability","能力；才能"],["alphabet","字母表"],["consonant","辅音"],["vowel","元音"],["pronounce","发音"],["word","单词；词"],["handwriting","书写；笔迹"],["bell","铃声；电铃"],["absent","缺席的"],["solution","解决办法"],["exact","精确的；准确的"],["solve","解决；处理"],["in order to","为了"],["keep up","跟上"],["register","登记；注册"],["revise","复习"],["hand in","提交；上交"],["composition","作文"],["talented","有才能的"],["search","搜索"],["information","信息"],["pronunciation","发音"],["exam","考试"]
+      ]) },
+      day5: { label: "Day 5", title: "Day 5 单词闯关", words: makeWords([
+        ["self-service","自助的"],["spinach","菠菜"],["broccoli","西兰花"],["cabbage","卷心菜"],["diet","日常饮食"],["grill","烧烤；烤架"],["lamb","羊羔肉"],["feed","喂养；饲养"],["corn","谷物；玉米"],["salmon","三文鱼"],["tuna","金枪鱼"],["soft drink","软饮料"],["contain","包含；含有"],["cheers","干杯"],["pineapple","菠萝"],["peach","桃子"],["saucer","茶碟"],["stir","搅拌"],["spill","洒出；溢出"],["replace","代替"],["refreshment","茶点"],["coconut","椰子"],["turkey","火鸡"],["noticeboard","告示牌"],["tiny","极小的"]
+      ]) },
+      day6: { label: "Day 6", title: "Day 6 单词闯关", words: makeWords([
+        ["tasty","美味的"],["chip","炸薯条；碎屑"],["sticky","黏的"],["disgusting","令人不快的"],["flavour","味道"],["pot","锅；罐"],["pan","平底锅"],["ingredient","原料；成分"],["flour","面粉"],["lettuce","生菜"],["cucumber","黄瓜"],["raw","生的"],["beef","牛肉"],["tin","罐；烤盘"],["frying pan","长柄平底煎锅"],["fry","油炸；油煎"],["cut up","切碎"],["bite","咬"],["acceptable","可接受的"],["roll","小面包卷"],["taste","味道；品尝"],["jar","罐子"],["spice","香料"],["spicy","辛辣的"],["tissue","纸巾"]
+      ]) },
+      day7: { label: "Day 7", title: "Day 7 单词闯关", words: makeWords([
+        ["advert","广告"],["advertise","做广告"],["goods","商品；货物"],["on sale","出售；降价出售"],["opposite","对面的"],["supermarket","超市"],["brand new","全新的"],["luxury","奢侈品；豪华"],["well-made","做工精良的"],["beneath","在下面"],["sweatshirt","运动衫"],["quality","质量；品质"],["pattern","图案；式样"],["obvious","明显的"],["suitable","合适的"],["least","最少的"],["pay","工资；付款"],["deposit","订金；押金"],["item","一件商品"],["second-hand","二手的"],["dear","昂贵的"],["complain","抱怨"],["afford","买得起"],["assistant","售货员；助理"],["inexpensive","不昂贵的"],["sleeveless","无袖的"],["satisfactory","令人满意的"],["exchange","更换；交流"],["refund","退款"],["knit","编织"],["how much","多少钱"],["reduce","减少"],["percent","百分之"],["charge","收费"],["half","一半"],["bargain","便宜货"],["cash","现金"]
+      ]) },
+      day8: { label: "Day 8", title: "Day 8 单词闯关", words: makeWords([
+        ["style","样式；风格"],["nearby","附近的"],["mall","购物中心"],["design","设计"],["ahead","提前；向前"],["choose","选择"],["material","材料；布料"],["paper","纸"],["packet","小盒；包装袋"],["plastic","塑料的；塑料"],["raise","提升；举起"],["besides","除此之外"],["label","标签"],["match","搭配；相配"],["fashionable","流行的"],["sandal","凉鞋"],["wear out","穿破；磨损"],["tight","紧的"],["undress","脱衣服"],["logo","标志"],["pullover","套头毛衣"],["sew","缝制"],["sleeve","袖子"],["tie","领带"],["made of","由……制成"],["silk","丝绸"],["pants","裤子"],["cotton","棉布"],["button","纽扣；按钮"],["fasten","系牢"],["pin","别针"],["collar","衣领"],["stylish","时髦的"],["fit","合身"],["queue","队伍"],["rough","粗略的"],["obviously","明显地"]
+      ]) },
+      day9: { label: "Day 9", title: "Day 9 单词闯关", words: makeWords([
+        ["hide","藏；躲避"],["while","当……时候"],["habit","习惯"],["development","发展"],["generally","通常；一般地"],["round","圆形的；环绕"],["thick","厚的"],["graphic","图像；图案"],["laugh","笑"],["leisure","休闲"],["blank","空白的"],["historic","有历史意义的"],["remind","提醒"],["experiment","实验"],["develop","发展；开发"],["article","文章"],["thought","想法"],["disappoint","使失望"],["expect","预期"],["improvement","改善"],["collector","收藏家"],["technique","技术"],["interest","兴趣"],["dislike","不喜欢"],["trend","趋势"],["keen","热衷的"],["fiction","小说"],["expedition","探险"],["particular","特别的"],["fancy","想要"],["detail","细节"],["go on","继续"],["hardly","几乎不"],["totally","完全地"],["experience","经历；体验"],["photocopy","复印件"],["personally","就个人而言"],["traditional","传统的"],["therefore","因此"]
+      ]) },
+      day10: { label: "Day 10", title: "Day 10 单词闯关", words: makeWords([
+        ["hike","远足"],["cruise","乘船游览"],["particularly","特别；尤其"],["uninterested","不感兴趣的"],["imagine","想象"],["insist","坚持"],["take place","发生；进行"],["though","虽然；不过"],["character","角色；人物"],["experienced","有经验的"],["responsible","负责的"],["in advance","提前"],["membership","会员资格"],["disappointment","失望"],["decision","决定"],["slide","滑动；滑梯"],["partly","部分地"],["impossible","不可能的"],["novel","小说"],["whilst","在……期间"],["thief","小偷"],["ancient","古代的"],["sculpture","雕塑"],["gallery","画廊；展览馆"],["hire","租借"],["motorcycle","摩托车"],["behave","表现"],["hang out","闲逛"],["opening hours","营业时间"],["rope","绳索"],["whether","是否"],["exist","存在"],["create","创造"],["imagination","想象力"],["creative","有创造力的"],["take up","占用；开始从事"],["importance","重要性"],["general","普遍的"],["author","作者"]
+      ]) },
+      day11: { label: "Day 11", title: "Day 11 单词闯关", words: makeWords([
+        ["beautiful","美丽的"],["generous","慷慨的"],["fond","喜爱的"],["ordinary","普通的"],["nervous","紧张的"],["anxious","焦虑的"],["disappointing","令人失望的"],["embarrassed","尴尬的"],["hopeful","满怀希望的"],["complete","完全的；完成"],["attitude","态度"],["annoy","使生气"],["realistic","现实的"],["demand","要求；需要"],["confident","自信的"],["wonderful","精彩的"],["personal","个人的"],["delighted","高兴的"],["encourage","鼓励"],["intelligent","聪明的"],["unable","不能的"],["cover","遮盖"],["serious","严肃的；严重的"],["crazy","疯狂的"],["consider","考虑"],["regret","后悔；遗憾"],["hug","拥抱"],["miserable","痛苦的"],["negative","消极的"],["calm","冷静的"],["comfort","安慰"],["compare","比较"],["come on","加油；快点"],["relaxed","放松的"],["manage","设法完成"],["look forward to","期待"],["reasonable","合理的"],["patient","有耐心的"],["reliable","可信赖的"],["courage","勇气"]
+      ]) },
+      day12: { label: "Day 12", title: "Day 12 单词闯关", words: makeWords([
+        ["smart","聪明的"],["common","常见的"],["elder","年纪较长的"],["amazed","吃惊的"],["cute","可爱的"],["annoyed","恼怒的"],["rude","粗鲁的"],["cruel","残忍的"],["control","控制"],["guilty","内疚的"],["seriously","严重地；认真地"],["confused","困惑的"],["impressed","印象深刻的"],["gentle","温柔的"],["willing","乐意的"],["charming","迷人的"],["attract","吸引"],["jealous","妒忌的"],["depressed","沮丧的"],["typical","典型的"],["bossy","专横的"],["challenging","有挑战性的"],["frightening","可怕的"],["in time","及时"],["ashamed","惭愧的"],["stupid","愚蠢的"],["embarrassing","令人尴尬的"],["relieved","宽慰的"],["satisfied","满意的"],["bored","厌倦的"],["disappointed","失望的"],["curiously","好奇地"],["cheerful","快乐的"],["energy","精力"],["end","结束；结局"],["amusing","好笑的"],["confusing","令人困惑的"],["enjoyable","令人愉快的"],["inspire","激励"]
+      ]) },
+      day13: { label: "Day 13", title: "Day 13 单词闯关", words: makeWords([
+        ["used to","习惯于"],["at present","目前"],["humid","潮湿的"],["climate","气候"],["forecast","预报"],["drop","下降；水珠"],["mild","温和的"],["cool","凉爽的"],["value","价值"],["glance","瞥一眼"],["pause","暂停"],["introduce","介绍"],["notice","通知；注意"],["appear","出现"],["user","使用者"],["get wet","淋湿"],["apart from","除了"],["sunshine","阳光"],["fairly","相当地"],["deserve","值得"],["breeze","微风"],["freezing","极冷的"],["snowfall","降雪"],["involve","包含；牵涉"],["affect","影响"],["condition","状况"],["wise","明智的"],["wherever","无论哪里"],["whenever","无论何时"],["absolutely","绝对地"],["count","数数；算入"],["wish","愿望；祝愿"],["lately","最近"],["arrange","安排"],["extraordinary","非凡的"],["attempt","尝试"],["approve","赞成"],["except","除……之外"]
+      ]) },
+      day14: { label: "Day 14", title: "Day 14 单词闯关", words: makeWords([
+        ["windy","多风的"],["broad","宽阔的"],["blow","刮；吹"],["gale","大风"],["rise","上升"],["height","高度；身高"],["yard","院子"],["bury","掩埋"],["within","在……之内"],["crash","碰撞；车祸"],["hole","洞；孔"],["average","平均的"],["approximately","大约"],["centigrade","摄氏的"],["extremely","极其地"],["despite","尽管"],["whatever","无论什么"],["extra","额外的"],["chance","机会"],["windscreen","挡风玻璃"],["icy","冰冷的"],["frozen","冻僵的"],["area","地区"],["declare","宣布"],["zone","地区；地带"],["urgently","紧急地"],["assist","帮助"],["medium","中等的"],["inch","英寸"],["upper","上面的"],["maximum","最大限度"],["slip","滑倒"],["approach","接近"],["in the end","最后"],["exhausted","筋疲力尽的"],["wing","翅膀；机翼"],["shine","发光"],["look like","看起来像"]
+      ]) },
+      day15: { label: "Day 15", title: "Day 15 单词闯关", words: makeWords([
+        ["employer","雇主"],["candidate","候选人；申请人"],["employ","雇用"],["apply","申请"],["application","申请；应用"],["contract","合同"],["crew","全体工作人员"],["profession","职业；行业"],["novelist","小说家"],["actress","女演员"],["part-time","兼职的"],["role","角色；作用"],["position","职位；位置"],["possibility","可能性"],["designer","设计师"],["barber","理发师"],["hairdresser","美发师"],["qualification","资格；学历"],["honest","诚实的"],["leader","领导者"],["conference","会议"],["employment","就业；雇用"],["detective","侦探"],["superhero","超级英雄"],["aim","目标；力求"],["full-time","全职的"],["director","导演"],["cameraman","摄影师"],["haircut","理发；发型"],["guard","警卫"],["accountant","会计师"],["duty","责任"],["account","账户；账目"],["tax","税"],["lawyer","律师"],["tiring","累人的"],["pile","一堆"],["salary","薪水"],["professional","专业的"],["easy-going","随和的"]
+      ]) },
+      day16: { label: "Day 16", title: "Day 16 单词闯关", words: makeWords([
+        ["middle-aged","中年的"],["policeman","男警察"],["rob","抢劫"],["prison","监狱"],["salesman","男售货员"],["saleswoman","女售货员"],["unemployed","失业的"],["diver","潜水员"],["customs officer","海关官员"],["captain","船长；队长"],["porter","搬运工"],["postman","邮递员"],["taxi driver","出租车司机"],["baker","面包师"],["quit","辞职；停止"],["sailor","水手"],["retire","退休"],["temporary","暂时的"],["architect","建筑师"],["firefighter","消防员"],["scientist","科学家"],["lecturer","讲师"],["professor","教授"],["vet","兽医"],["owner","主人；所有者"],["employee","雇员"],["soldier","士兵"],["coach","教练"],["builder","建筑工人"],["jail","监狱"]
+      ]) },
+      day17: { label: "Day 17", title: "Day 17 单词闯关", words: makeWords([
+        ["celebrity","名人"],["industry","工业；行业"],["hero","英雄；男主角"],["heroine","女英雄；女主角"],["bestseller","畅销书"],["hit song","流行歌曲"],["admire","钦佩"],["independent","独立的"],["clear","清楚的"],["pocket money","零花钱"],["admission","入场费"],["book","预订"],["inform","通知"],["perform","表演"],["performance","演出"],["clap","鼓掌"],["audience","观众"],["magic","魔法"],["incredible","难以置信的"],["scream","尖叫"],["excitement","兴奋"],["tourist industry","旅游业"],["live","现场的"],["courage","勇气"],["stage","舞台"],["show","演出"],["ticket","门票"],["price","价格"]
+      ]) },
+      day18: { label: "Day 18", title: "Day 18 单词闯关", words: makeWords([
+        ["entertain","招待；娱乐"],["admit","承认；准许进入"],["permit","允许"],["permanent","永久的"],["display","展示；陈列"],["firework","烟花"],["silly","愚蠢的"],["issue","问题；议题"],["individual","单独的；个人的"],["documentary","纪录片"],["series","系列"],["soap opera","肥皂剧"],["orchestra","管弦乐队"],["folk","民间的"],["performer","表演者"],["indeed","确实"],["smell","气味；闻到"],["row","一排座位"],["smoke","烟；吸烟"],["social","社会的；社交的"],["society","社会"],["interval","幕间休息"],["production","制作；生产"],["till","直到"],["headphones","耳机"],["podcast","播客"],["turn up","调高"],["turn down","调低；拒绝"],["base on","以……为基础"],["conclusion","结论"],["underneath","在下面"],["main","主要的"],["complicated","复杂的"],["system","系统"],["out of order","出故障"],["incredibly","极其"],["stressed","焦虑的"],["network","网络"],["review","评论"]
+      ]) },
+      day19: {
+        label: "Day 19",
+        title: "Day 19 旅行单词闯关",
+        words: [
+      { word: "on holiday", sound: "on holiday", pos: "phr.", zh: "在度假，在休假", example: "We are on holiday in London.", exampleZh: "我们正在伦敦度假。" },
+      { word: "abroad", pos: "adv.", zh: "在国外，到国外", example: "I want to study abroad.", exampleZh: "我想去国外学习。" },
+      { word: "capital", pos: "n.", zh: "首都", example: "Cairo is the capital of Egypt.", exampleZh: "开罗是埃及的首都。" },
+      { word: "departure", pos: "n.", zh: "离开，出发", example: "Please confirm the departure time.", exampleZh: "请确认出发时间。" },
+      { word: "visa", pos: "n.", zh: "签证", example: "Dad will apply for a visa.", exampleZh: "爸爸将申请签证。" },
+      { word: "luggage", pos: "n.", zh: "行李", example: "There is too much luggage.", exampleZh: "行李太多了。" },
+      { word: "baggage", pos: "n.", zh: "行李", example: "The baggage is heavy.", exampleZh: "这些行李很重。" },
+      { word: "cultural", pos: "adj.", zh: "文化的", example: "We visited a cultural background museum.", exampleZh: "我们参观了一个文化背景博物馆。" },
+      { word: "custom", pos: "n.", zh: "风俗，习惯", example: "It is a local custom.", exampleZh: "这是当地的风俗。" },
+      { word: "confirm", pos: "v.", zh: "确认，证实", example: "Can you confirm what happened?", exampleZh: "你能确认发生了什么吗？" },
+      { word: "route", pos: "n.", zh: "路线", example: "This is a coastal route.", exampleZh: "这是一条沿海路线。" },
+      { word: "cab", pos: "n.", zh: "出租车", example: "Let's take a cab.", exampleZh: "我们坐出租车吧。" },
+      { word: "check-in", pos: "n.", zh: "办理登机手续", example: "The check-in desk is busy.", exampleZh: "办理登机手续的柜台很忙。" },
+      { word: "boarding pass", pos: "n.", zh: "登机牌", example: "Show your boarding pass.", exampleZh: "出示你的登机牌。" },
+      { word: "board", pos: "v.", zh: "上飞机、船或车", example: "The ship was boarded by officials.", exampleZh: "官员登上了那艘船。" },
+      { word: "on time", pos: "phr.", zh: "按时", example: "The plane arrived on time.", exampleZh: "飞机按时到达。" },
+      { word: "signpost", pos: "n.", zh: "路标，指示牌", example: "Follow the signposts to the supermarket.", exampleZh: "沿着指示牌去超市。" },
+      { word: "set off", pos: "phr.", zh: "出发", example: "We set off early.", exampleZh: "我们很早就出发了。" },
+      { word: "distance", pos: "n.", zh: "距离", example: "The village is in the distance.", exampleZh: "村庄在远处。" },
+      { word: "land", pos: "v.", zh: "降落，着陆", example: "The plane landed safely.", exampleZh: "飞机安全着陆了。" },
+      { word: "safely", pos: "adv.", zh: "安全地", example: "We arrived safely.", exampleZh: "我们安全到达了。" },
+      { word: "arrival", pos: "n.", zh: "到达，抵达", example: "Guests receive dinner on arrival.", exampleZh: "客人到达后会收到晚餐。" },
+      { word: "underground", pos: "n.", zh: "地铁", example: "I always travel by underground.", exampleZh: "我总是乘地铁出行。" },
+      { word: "check in", pos: "phr.", zh: "登记入住", example: "Please check in at reception.", exampleZh: "请在接待处登记入住。" },
+      { word: "reception", pos: "n.", zh: "接待处，服务台", example: "All visitors must report to reception.", exampleZh: "所有访客都必须到接待处报到。" },
+      { word: "backpacker", pos: "n.", zh: "背包旅行者", example: "The backpacker has a small tent.", exampleZh: "这位背包客有一个小帐篷。" },
+      { word: "brochure", pos: "n.", zh: "手册，旅游手册", example: "Read the travel brochure.", exampleZh: "读一下旅游手册。" },
+      { word: "culture", pos: "n.", zh: "文化", example: "We learned about local culture.", exampleZh: "我们了解了当地文化。" },
+      { word: "on foot", pos: "phr.", zh: "步行", example: "We go to the campsite on foot.", exampleZh: "我们步行去营地。" },
+      { word: "palace", pos: "n.", zh: "宫殿", example: "Buckingham Palace is famous.", exampleZh: "白金汉宫很有名。" },
+      { word: "booking office", pos: "n.", zh: "售票处", example: "Buy tickets at the booking office.", exampleZh: "在售票处买票。" },
+      { word: "due to", pos: "phr.", zh: "由于，因为", example: "The road is closed due to bad weather.", exampleZh: "由于天气不好，道路关闭了。" },
+      { word: "destination", pos: "n.", zh: "目的地，终点", example: "Paris is our destination.", exampleZh: "巴黎是我们的目的地。" },
+      { word: "charter", pos: "v.", zh: "包租飞机或船等", example: "They charter a plane.", exampleZh: "他们包租了一架飞机。" },
+      { word: "tour", pos: "n.", zh: "旅行", example: "We went on a tour.", exampleZh: "我们参加了一次旅行。" },
+      { word: "speed", pos: "n.", zh: "速度", example: "The train travels at top speed.", exampleZh: "火车以最高速度行驶。" },
+      { word: "magnificent", pos: "adj.", zh: "壮丽的，宏伟的", example: "It is a magnificent building.", exampleZh: "这是一座宏伟的建筑。" },
+      { word: "landscape", pos: "n.", zh: "风景，景色", example: "We saw a desert landscape.", exampleZh: "我们看到了沙漠景色。" },
+      { word: "peak", pos: "n.", zh: "山峰，顶峰", example: "The mountain peak is snowy.", exampleZh: "山峰上覆盖着雪。" },
+      { word: "tunnel", pos: "n.", zh: "隧道", example: "A railway tunnel goes through the hill.", exampleZh: "一条铁路隧道穿过小山。" },
+      { word: "reach", pos: "v.", zh: "到达，实现", example: "We reached Delhi at 2 o'clock.", exampleZh: "我们两点到达德里。" },
+      { word: "resort", pos: "n.", zh: "度假胜地", example: "This is a popular holiday resort.", exampleZh: "这是一个受欢迎的度假胜地。" },
+      { word: "seaside", pos: "n.", zh: "海边", example: "We stayed at the seaside.", exampleZh: "我们住在海边。" },
+      { word: "credit", pos: "n.", zh: "信用，学分", example: "This course gives one credit.", exampleZh: "这门课程给一个学分。" },
+      { word: "embassy", pos: "n.", zh: "大使馆", example: "We found the embassy.", exampleZh: "我们找到了大使馆。" },
+      { word: "by air", pos: "phr.", zh: "乘坐飞机", example: "He arrived by air.", exampleZh: "他乘飞机到达。" },
+      { word: "checkout", pos: "n.", zh: "办理退房，结账", example: "Checkout is before noon.", exampleZh: "退房时间在中午之前。" },
+      { word: "souvenir", pos: "n.", zh: "纪念品", example: "I bought a souvenir.", exampleZh: "我买了一个纪念品。" },
+      { word: "duty-free", pos: "adj.", zh: "免关税的", example: "They sell duty-free goods.", exampleZh: "他们出售免税商品。" }
+        ]
+      },
+      day20: {
+        label: "Day 20",
+        title: "Day 20 交通运输单词闯关",
+        words: [
+          { word: "sail", pos: "v.", zh: "航行", example: "I'd buy a big boat and sail around the world.", exampleZh: "我要买一条大船航游世界。" },
+          { word: "at sea", pos: "phr.", zh: "在海上", example: "They were lost at sea.", exampleZh: "他们在海上迷失了方向。" },
+          { word: "by sea", pos: "phr.", zh: "海运，乘船", example: "We travelled by sea.", exampleZh: "我们乘船旅行。" },
+          { word: "by rail", pos: "phr.", zh: "用铁路，乘火车", example: "They sent the goods by rail.", exampleZh: "他们用铁路运送货物。" },
+          { word: "by road", pos: "phr.", zh: "经由公路", example: "We went there by road.", exampleZh: "我们经由公路去那里。" },
+          { word: "on business", pos: "phr.", zh: "出差", example: "I have to go to Rome on business.", exampleZh: "我得去罗马出差。" },
+          { word: "overnight", pos: "adv.", zh: "在夜间，在晚上", example: "I camped overnight in a field.", exampleZh: "我在田野里露营过夜。" },
+          { word: "jet", pos: "n.", zh: "喷气式飞机", example: "They travel overnight on a jet.", exampleZh: "他们乘喷气式飞机过夜旅行。" },
+          { word: "cabin", pos: "n.", zh: "客舱，船舱", example: "Get in the cabin quickly.", exampleZh: "快进客舱。" },
+          { word: "accommodation", pos: "n.", zh: "住宿", example: "Travel and overnight accommodation are included.", exampleZh: "旅行及夜间住宿是包含在内的。" },
+          { word: "service", pos: "n.", zh: "服务", example: "The hotel offers good service.", exampleZh: "这家酒店提供良好的服务。" },
+          { word: "on board", pos: "phr.", zh: "在船、火车、飞机上", example: "Let's get on board quickly.", exampleZh: "我们快上船吧。" },
+          { word: "tourism", pos: "n.", zh: "旅游业", example: "Tourism industry is important here.", exampleZh: "旅游业在这里很重要。" },
+          { word: "airline", pos: "n.", zh: "航空公司", example: "The airline opened a new route.", exampleZh: "这家航空公司开通了一条新航线。" },
+          { word: "deliver", pos: "v.", zh: "递送，传送", example: "Do you have your milk delivered?", exampleZh: "你的牛奶是让别人送吗？" },
+          { word: "via", pos: "prep.", zh: "经由，通过", example: "The news programme came to us via satellite.", exampleZh: "新闻节目是通过卫星传送到我们这里的。" },
+          { word: "van", pos: "n.", zh: "厢式送货车，客货车", example: "A van driver delivers goods.", exampleZh: "客货车司机运送货物。" },
+          { word: "rail", pos: "n.", zh: "铁路，铁道", example: "Rail travel is convenient.", exampleZh: "铁路旅行很方便。" },
+          { word: "border", pos: "n.", zh: "国界，边界", example: "They crossed the border.", exampleZh: "他们穿越了边界。" },
+          { word: "canal", pos: "n.", zh: "运河", example: "The canal is open to shipping.", exampleZh: "运河可以通航了。" },
+          { word: "exchange", pos: "v. & n.", zh: "交换，交流", example: "We had an exchange of ideas and information.", exampleZh: "我们进行了思想和信息的交流。" },
+          { word: "vehicle", pos: "n.", zh: "车辆，交通工具", example: "Vehicles need fuel to drive.", exampleZh: "车辆需要燃料才能行驶。" },
+          { word: "fuel", pos: "n.", zh: "燃料", example: "The car is short of fuel.", exampleZh: "这辆车燃料不足。" },
+          { word: "hitchhike", pos: "v.", zh: "免费搭便车，搭顺风车", example: "Some travellers hitchhike across the country.", exampleZh: "一些旅行者搭便车穿越这个国家。" },
+          { word: "backpacking", pos: "n.", zh: "背包旅行", example: "They go backpacking every summer.", exampleZh: "他们每年夏天都去背包旅行。" },
+          { word: "enormous", pos: "adj.", zh: "巨大的", example: "It is an enormous house.", exampleZh: "这是一座巨大的房子。" },
+          { word: "spaceship", pos: "n.", zh: "宇宙飞船", example: "They travelled by spaceship.", exampleZh: "他们乘宇宙飞船旅行。" },
+          { word: "rocket", pos: "n.", zh: "火箭", example: "The rocket flew into space.", exampleZh: "火箭飞入太空。" },
+          { word: "pedestrian", pos: "n.", zh: "行人", example: "Pedestrians should use the pavement.", exampleZh: "行人应该走人行道。" },
+          { word: "pavement", pos: "n.", zh: "人行道，路面", example: "You can't ride your bicycle on the pavement.", exampleZh: "你不能在人行道上骑车。" },
+          { word: "crossroads", pos: "n.", zh: "十字路口", example: "Wait at the crossroads.", exampleZh: "在十字路口等待。" },
+          { word: "road sign", pos: "n.", zh: "路标", example: "Drivers must follow road signs.", exampleZh: "司机必须遵守路标。" },
+          { word: "turning", pos: "n.", zh: "拐弯处，转弯处", example: "Take the next turning on the left.", exampleZh: "在下一个路口左转。" },
+          { word: "backwards", pos: "adv.", zh: "向后", example: "He took a step backwards.", exampleZh: "他向后退了一步。" },
+          { word: "brake", pos: "v. & n.", zh: "刹车", example: "He braked the car slightly.", exampleZh: "他轻轻地刹车了。" },
+          { word: "get in", pos: "phr.", zh: "进入，到达", example: "Please get in the car.", exampleZh: "请上车。" },
+          { word: "parking space", pos: "n.", zh: "停车位", example: "There is a parking space reserved.", exampleZh: "有一个停车位被预留了。" },
+          { word: "reserve", pos: "v.", zh: "预订，预留", example: "These seats are reserved for special guests.", exampleZh: "这些座位是留给特邀嘉宾的。" }
+        ]
+      },
+      day21: { label: "Day 21", title: "Day 21 自然环境单词闯关", words: makeWords([
+        ["universe","宇宙"],["planet","行星"],["live","居住；生活"],["rainforest","热带雨林"],["land","陆地；地面"],["cave","山洞"],["stone","石头"],["stream","溪流"],["valley","山谷"],["waterfall","瀑布"],["cliff","悬崖"],["coast","海岸"],["sand","沙子"],["shore","海滨"],["sunrise","日出"],["sunset","日落"],["earth","地球；陆地"],["ocean","海洋"],["continent","大陆；洲"],["marvellous","极好的"],["scenery","风景"],["crop","庄稼；农作物"],["farmland","农田"],["hunger","饥饿"],["necessary","必要的"],["limited","有限的"],["run out","用完；耗尽"],["generation","一代"],["wildlife","野生动物"],["natural","自然的"],["colourful","丰富多彩的"],["giant","巨大的；巨人"],["environmental","环境的"],["destroy","破坏"],["hunt","打猎"],["rare","稀有的"],["kill","杀死"],["get along well with","与……和睦相处"],["beauty","美丽"],["human","人类"],["farming","农业"],["zebra","斑马"],["giraffe","长颈鹿"],["kangaroo","袋鼠"],["penguin","企鹅"],["creature","生物"],["mosquito","蚊子"],["species","物种"],["decrease","减少"]
+      ]) },
+      day22: { label: "Day 22", title: "Day 22 地理动物单词闯关", words: makeWords([
+        ["announce","宣布"],["at first","首先；最初"],["southeast Asia","东南亚"],["attractive","吸引人的"],["navy blue","深蓝色的"],["wave","海浪；挥手"],["beat","节拍；打败"],["directly","直接地；立即"],["northwest","西北"],["unbelievable","难以置信的"],["region","地区"],["bush","灌木"],["frog","青蛙"],["season","季节"],["attack","攻击"],["ruin","毁坏"],["succeed","成功"],["defeat","击败"],["bay","海湾"],["southeast","东南"],["narrow","狭窄的"],["leaf","叶子"],["branch","树枝；分支"],["shortly","不久"],["peaceful","和平的；平静的"],["population","人口"],["lively","活泼的"],["cattle","牛"],["goat","山羊"],["donkey","驴"],["pig","猪"],["ant","蚂蚁"],["parrot","鹦鹉"],["cage","笼子"],["nasty","极差的；恶心的"],["get on with","继续做"],["sparkling","闪闪发光的"],["at all","根本"]
+      ]) },
+      day23: { label: "Day 23", title: "Day 23 健康单词闯关", words: makeWords([
+        ["gym","健身房"],["fitness","健康；健身"],["hurt","受伤"],["ankle","脚踝"],["knee","膝盖"],["injure","伤害；使受伤"],["bandage","绷带"],["bone","骨骼"],["operation","手术"],["wheelchair","轮椅"],["pill","药片"],["recover","恢复健康"],["uncomfortable","不舒服的"],["weak","虚弱的"],["illness","疾病"],["workout","锻炼"],["cough","咳嗽"],["fever","发烧"],["sore","疼痛的"],["bleed","流血"],["painful","疼痛的"],["ambulance","救护车"],["throat","喉咙"],["feel ill","感到不适"],["suffer","遭受"],["disease","疾病"],["clinic","诊所"],["flu","流感"],["aspirin","阿司匹林"],["prescription","药方"],["get better","康复；变好"],["unhealthy","不健康的"],["take exercise","锻炼"],["jogging","慢跑"],["yoga","瑜伽"]
+      ]) },
+      day24: { label: "Day 24", title: "Day 24 运动单词闯关", words: makeWords([
+        ["extreme sports","极限运动"],["motor-racing","赛车"],["water skiing","滑水"],["pitch","球场；音调"],["damage","损害"],["emergency","紧急情况"],["boxing","拳击"],["championship","锦标赛；冠军称号"],["competitor","竞争者；选手"],["compete","竞争"],["hit","击打"],["helmet","头盔"],["join in","参加"],["league","联盟"],["squash","壁球"],["patient","耐心的；病人"],["tournament","锦标赛"],["train","训练；火车"],["instructor","指导者"],["swimmer","游泳者"],["changing room","更衣室"],["race track","赛道"],["breath","呼吸"],["out of breath","喘不过气"],["athletics","田径运动"],["high jump","跳高"],["champion","冠军"],["athlete","运动员"],["training","训练"],["tracksuit","运动服"],["score","得分"],["race","比赛"],["stress","压力"],["contest","比赛"],["horse-riding","骑马"],["ice hockey","冰球"]
+      ]) },
+      day25: { label: "Day 25", title: "Day 25 环保交通单词闯关", words: makeWords([
+        ["explode","爆炸；暴涨"],["likely","可能的"],["traffic jam","交通堵塞"],["global warming","全球变暖"],["sharp","急剧的；锋利的"],["amount","数量"],["pollution","污染"],["atmosphere","大气；气氛"],["terribly","非常"],["climate change","气候变化"],["attach importance to","重视"],["rubbish bin","垃圾桶"],["instance","实例"],["recycled","可回收利用的"],["bottle bank","玻璃瓶回收站"],["plant","植物；种植"],["sight","视力；景象"],["challenge","挑战"],["signal","信号"],["back","背面；后面"],["track","轨道；小道"],["ought","应该"],["attach","附上；重视"],["public transport","公共交通"],["organisation","组织"],["rule","规则"],["hope","希望"],["other","其他的"],["efficient","高效的"],["method","方法"],["favour","帮助；赞成"],["multiply","繁殖；成倍增加"],["remain","保持"],["situation","情况；形势"],["none","没有人"],["recycle","回收利用"],["nowadays","现今"],["throw away","扔掉"],["prohibited","被禁止的"],["because of","因为"],["at the same time","与此同时"],["carry on","继续"],["unfortunately","不幸地"],["option","选择"],["take care of","照顾"],["effort","努力"],["difficulty","困难"],["step","步骤；脚步"],["otherwise","否则"]
+      ]) },
+      day26: { label: "Day 26", title: "Day 26 环保行动单词闯关", words: makeWords([
+        ["normally","通常地"],["intend","打算"],["require","需要；要求"],["carry out","执行"],["instead","代替；反而"],["litter","乱扔；垃圾"],["on purpose","故意地"],["go off","变质"],["break down","分解；发生故障"],["spoil","破坏"],["benefit","益处；有益于"],["definitely","确定地"],["lack","缺乏"],["as long as","只要"],["support","支持"],["mind","头脑；介意"],["minimum","最小值"],["remove","移开"],["sensible","明智的"],["strict","严格的"],["spot","地点；斑点"],["organise","组织"],["volunteer","志愿者"],["reward","报酬；奖励"],["bald","秃顶的"],["supply","供给"],["steep","陡峭的"],["shade","树荫"],["regarding","关于"],["hopefully","有希望地"],["gain","获得"],["unexpected","出乎意料的"],["at least","至少"]
+      ]) },
+      day27: { label: "Day 27", title: "Day 27 科技沟通单词闯关", words: makeWords([
+        ["invention","发明"],["communication","交流；通信"],["connection","联系；连接"],["face to face","面对面"],["fax","传真"],["invent","发明"],["ring up","打电话"],["operator","操作员；话务员"],["dial","拨号"],["engaged","忙碌的；占线的"],["reply","回答"],["at once","马上"],["install","安装"],["home page","主页"],["relative","亲戚"],["disappear","消失"],["data","数据"],["social media","社交媒体"],["blogger","博客作者"],["realise","意识到"],["chat","聊天"],["electronic","电子的"],["access","通道；机会"],["webcam","网络摄像头"],["volume","容量；体积"],["calculator","计算器"],["hardware","硬件"],["server","服务器"],["switch on","打开"],["machine","机器"],["connect","连接"],["upload","上传"],["video clip","视频片段"],["advanced","先进的"],["advantage","优点"],["disadvantage","缺点"],["disturb","打扰"]
+      ]) },
+      day28: { label: "Day 28", title: "Day 28 沟通关系单词闯关", words: makeWords([
+        ["argument","争论"],["robot","机器人"],["give up","放弃"],["explanation","解释"],["accept","接受"],["pleasure","快乐"],["disagree","不同意"],["reality","现实"],["accompany","陪伴"],["relationship","关系"],["rely","依靠"],["trust","信任"],["loudly","大声地"],["delivery","递送"],["sign up","报名参加"],["bug","小虫；故障"],["regular","定期的"],["persuade","说服"],["unknown","未知的"],["discussion","讨论"],["advise","建议"],["keep in contact with","保持联系"],["secret","秘密"],["on request","应要求"],["joke","玩笑"],["relax","放松"],["recognise","认出"],["unpleasant","不愉快的"],["recommend","推荐"],["untidy","凌乱的"],["unpack","打开取出"],["parcel","包裹"],["get down","使沮丧"],["reasonably","合理地"],["ignore","忽视"],["unlikely","不太可能的"],["interrupt","打断"]
+      ]) }
+    };
+
+    let words = wordSets.day19.words;
+
+    function cleanUserId(value) {
+      const text = String(value || "").trim();
+      return text || "default";
+    }
+
+    function activeUserKey() {
+      try {
+        return cleanUserId(localStorage.getItem("day19ActiveUser") || "default");
+      } catch (error) {
+        return "default";
+      }
+    }
+
+    function activeDayKey() {
+      try {
+        const day = localStorage.getItem("wordPracticeActiveDay") || "day19";
+        return wordSets[day] ? day : "day19";
+      } catch (error) {
+        return "day19";
+      }
+    }
+
+    function storageKey(name) {
+      return `wordPractice:${state.day}:${state.userId}:${name}`;
+    }
+
+    function readLocal(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value === null ? fallback : value;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function loadAttempts(userId, day = activeDayKey()) {
+      try {
+        return JSON.parse(readLocal(`wordPractice:${day}:${userId}:attempts`, "{}"));
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function loadWrongBook(userId, day = activeDayKey()) {
+      try {
+        return JSON.parse(readLocal(`wordPractice:${day}:${userId}:wrongBook`, "[]"));
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function loadNumber(userId, name, day = activeDayKey()) {
+      const value = Number(readLocal(`wordPractice:${day}:${userId}:${name}`, "0"));
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    words = wordSets[activeDayKey()].words;
+
+    const state = {
+      userId: activeUserKey(),
+      day: activeDayKey(),
+      view: "cards",
+      filter: "all",
+      current: null,
+      locked: false,
+      streak: loadNumber(activeUserKey(), "streak", activeDayKey()),
+      score: loadNumber(activeUserKey(), "score", activeDayKey()),
+      attempts: loadAttempts(activeUserKey(), activeDayKey()),
+      wrongBook: loadWrongBook(activeUserKey(), activeDayKey()),
+      queueIndex: loadNumber(activeUserKey(), "queueIndex", activeDayKey()),
+      wrongIndex: loadNumber(activeUserKey(), "wrongIndex", activeDayKey())
+    };
+
+    const panel = document.querySelector("#panel");
+    let miniList = document.querySelector("#miniList");
+    const scoreEl = document.querySelector("#score");
+    const streakEl = document.querySelector("#streak");
+    const masteredEl = document.querySelector("#mastered");
+    const leftEl = document.querySelector("#left");
+    let barEl = document.querySelector("#bar");
+    const userIdInput = document.querySelector("#userIdInput");
+    const daySelect = document.querySelector("#daySelect");
+    const appTitle = document.querySelector("#appTitle");
+    let downloadWrongBtn = document.querySelector("#downloadWrong");
+    let downloadStatus = document.querySelector("#downloadStatus");
+
+    function save() {
+      try {
+        localStorage.setItem("day19ActiveUser", state.userId);
+        localStorage.setItem("wordPracticeActiveDay", state.day);
+        localStorage.setItem(storageKey("attempts"), JSON.stringify(state.attempts));
+        localStorage.setItem(storageKey("wrongBook"), JSON.stringify(state.wrongBook));
+        localStorage.setItem(storageKey("queueIndex"), String(state.queueIndex));
+        localStorage.setItem(storageKey("wrongIndex"), String(state.wrongIndex));
+        localStorage.setItem(storageKey("score"), String(state.score));
+        localStorage.setItem(storageKey("streak"), String(state.streak));
+      } catch (error) {
+        // The app still works when opened as a local file in strict browsers.
+      }
+    }
+
+    function loadProfile() {
+      words = wordSets[state.day].words;
+      state.score = loadNumber(state.userId, "score", state.day);
+      state.streak = loadNumber(state.userId, "streak", state.day);
+      state.attempts = loadAttempts(state.userId, state.day);
+      state.wrongBook = loadWrongBook(state.userId, state.day);
+      state.queueIndex = loadNumber(state.userId, "queueIndex", state.day);
+      state.wrongIndex = loadNumber(state.userId, "wrongIndex", state.day);
+    }
+
+    function switchUser(userId) {
+      save();
+      state.userId = cleanUserId(userId);
+      loadProfile();
+      if (userIdInput) userIdInput.value = state.userId;
+      save();
+      render();
+    }
+
+    function switchDay(day) {
+      if (!wordSets[day]) return;
+      save();
+      state.day = day;
+      state.view = "cards";
+      state.filter = "all";
+      state.locked = false;
+      loadProfile();
+      save();
+      render();
+    }
+
+    function renderDayOptions() {
+      daySelect.innerHTML = Object.entries(wordSets)
+        .map(([key, set]) => `<option value="${key}">${set.label}</option>`)
+        .join("");
+      daySelect.value = state.day;
+    }
+
+    function wordStats(word) {
+      return state.attempts[word.word] || { right: 0, wrong: 0 };
+    }
+
+    function isMastered(word) {
+      const s = wordStats(word);
+      return s.right >= 3;
+    }
+
+    function isWeak(word) {
+      const s = wordStats(word);
+      return state.wrongBook.includes(word.word) && !isMastered(word);
+    }
+
+    function speak(text, slow = false) {
+      if (!("speechSynthesis" in window)) return;
+      speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = slow ? 0.72 : 0.86;
+      utterance.pitch = 1.03;
+      speechSynthesis.speak(utterance);
+    }
+
+    function sample(list, count) {
+      const copy = [...list].sort(() => Math.random() - .5);
+      return copy.slice(0, count);
+    }
+
+    function pickWord(source = "all") {
+      if (source === "wrong") {
+        const wrongWords = words.filter(isWeak);
+        if (!wrongWords.length) return null;
+        const word = wrongWords[state.wrongIndex % wrongWords.length];
+        state.wrongIndex += 1;
+        save();
+        return word;
+      }
+      const word = words[state.queueIndex % words.length];
+      state.queueIndex += 1;
+      save();
+      return word;
+    }
+
+    function normalize(text) {
+      return text.trim().toLowerCase().replace(/\s+/g, " ").replace(/[’']/g, "'");
+    }
+
+    function escapeCell(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function csvCell(value) {
+      return String(value ?? "")
+        .replace(/"/g, "")
+        .replace(/,/g, "，")
+        .replace(/\r?\n/g, " ");
+    }
+
+    function copyWrongText() {
+      const textArea = document.querySelector("#wrongCsvText");
+      if (!textArea) return;
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        document.querySelector("#copyStatus").textContent = "已复制，可以直接粘贴到 Excel。";
+      } catch (error) {
+        document.querySelector("#copyStatus").textContent = "请按 Ctrl+C 复制，再粘贴到 Excel。";
+      }
+    }
+
+    function downloadWrongWords() {
+      const wrongWords = words.filter(word => state.wrongBook.includes(word.word));
+      if (!wrongWords.length) {
+        downloadStatus.textContent = "当前没有错词。";
+        return;
+      }
+      const headers = ["Word", "中文意思", "Example"];
+      const csvRows = [headers.map(csvCell).join(",")];
+      const rows = wrongWords.map(word => {
+        csvRows.push([word.word, word.zh, word.example].map(csvCell).join(","));
+        return `
+          <tr>
+            <td>${escapeCell(word.word)}</td>
+            <td>${escapeCell(word.zh)}</td>
+            <td>${escapeCell(word.example)}</td>
+          </tr>
+        `;
+      }).join("");
+      const html = `
+        <html>
+          <head><meta charset="utf-8"></head>
+          <body>
+            <table border="1">
+              <tr>
+                <th>Word</th>
+                <th>中文意思</th>
+                <th>Example</th>
+              </tr>
+              ${rows}
+            </table>
+          </body>
+        </html>
+      `;
+      const csvText = csvRows.join("\r\n");
+      const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const csvUrl = `data:text/csv;charset=utf-8,${encodeURIComponent("\ufeff" + csvText)}`;
+      const link = document.createElement("a");
+      const fileName = "Day19错词.xls";
+      link.href = url;
+      link.download = fileName;
+      link.textContent = `点击这里保存 ${fileName}`;
+      const csvLink = document.createElement("a");
+      csvLink.href = csvUrl;
+      csvLink.download = "Day19错词.csv";
+      csvLink.textContent = "下载 CSV";
+      link.click();
+      downloadStatus.innerHTML = "";
+      downloadStatus.append("如果没有自动下载，试试 ");
+      downloadStatus.appendChild(link);
+      downloadStatus.append(" 或 ");
+      downloadStatus.appendChild(csvLink);
+      downloadStatus.append("。下载仍被拦截时，可复制下面内容粘贴到 Excel。");
+      const copyButton = document.createElement("button");
+      copyButton.className = "small-btn";
+      copyButton.type = "button";
+      copyButton.textContent = "复制表格内容";
+      copyButton.addEventListener("click", copyWrongText);
+      const copyStatus = document.createElement("div");
+      copyStatus.id = "copyStatus";
+      const textArea = document.createElement("textarea");
+      textArea.id = "wrongCsvText";
+      textArea.value = csvText;
+      downloadStatus.appendChild(copyButton);
+      downloadStatus.appendChild(copyStatus);
+      downloadStatus.appendChild(textArea);
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        if (link.parentNode) link.remove();
+      }, 60000);
+    }
+
+    function mark(word, ok) {
+      const s = wordStats(word);
+      state.attempts[word.word] = { right: s.right + (ok ? 1 : 0), wrong: s.wrong + (ok ? 0 : 1) };
+      if (!ok && !state.wrongBook.includes(word.word)) {
+        state.wrongBook.push(word.word);
+      }
+      state.streak = ok ? state.streak + 1 : 0;
+      state.score += ok ? 1 : 0;
+      if (ok && state.streak > 0 && state.streak % 5 === 0) burst();
+      save();
+      renderStats();
+    }
+
+    function renderStats() {
+      const mastered = words.filter(isMastered).length;
+      scoreEl.textContent = state.score;
+      streakEl.textContent = state.streak;
+      masteredEl.textContent = mastered;
+      leftEl.textContent = words.length - mastered;
+      if (barEl) barEl.style.width = `${Math.round(mastered / words.length * 100)}%`;
+      renderMiniList();
+    }
+
+    function renderMiniList() {
+      if (!miniList) return;
+      const filtered = words.filter(word => {
+        if (state.filter === "mastered") return isMastered(word);
+        if (state.filter === "weak") return isWeak(word);
+        return true;
+      });
+      miniList.innerHTML = filtered.map(word => {
+        const s = wordStats(word);
+        const badge = isMastered(word) ? "掌握" : isWeak(word) ? "错题" : `${s.right}/3`;
+        return `<div class="mini-word"><span><b>${word.word}</b><br>${word.zh}</span><span class="badge">${badge}</span></div>`;
+      }).join("");
+    }
+
+    function renderCards() {
+      panel.innerHTML = `
+        <h2 class="section-title">先认识，再闯关</h2>
+        <div class="word-grid">
+          ${words.map(word => `
+            <article class="word-card">
+              <div class="word-head">
+                <div>
+                  <div class="word">${word.word}</div>
+                  <div class="phonetic">${word.pos}</div>
+                </div>
+                <button class="icon-btn" title="播放发音" aria-label="播放 ${word.word}" data-say="${word.sound || word.word}">🔊</button>
+              </div>
+              <div class="meaning">${word.zh}</div>
+              <div class="example">${word.example}</div>
+              <div class="example-zh">${word.exampleZh}</div>
+            </article>
+          `).join("")}
+        </div>
+      `;
+      panel.querySelectorAll("[data-say]").forEach(btn => {
+        btn.addEventListener("click", () => speak(btn.dataset.say, true));
+      });
+    }
+
+    function bindRadarControls() {
+      miniList = document.querySelector("#miniList");
+      barEl = document.querySelector("#bar");
+      downloadWrongBtn = document.querySelector("#downloadWrong");
+      downloadStatus = document.querySelector("#downloadStatus");
+      document.querySelectorAll(".filter").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.filter === state.filter);
+        btn.addEventListener("click", () => {
+          state.filter = btn.dataset.filter;
+          document.querySelectorAll(".filter").forEach(item => item.classList.toggle("active", item === btn));
+          renderMiniList();
+        });
+      });
+      if (downloadWrongBtn) {
+        downloadWrongBtn.addEventListener("click", downloadWrongWords);
+      }
+    }
+
+    function renderRadar() {
+      panel.innerHTML = `
+        <h2 class="section-title">复习雷达</h2>
+        <div class="progress" aria-label="掌握进度"><div class="bar" id="bar"></div></div>
+        <div class="filters">
+          <button class="filter" data-filter="all">全部</button>
+          <button class="filter" data-filter="weak">错词</button>
+          <button class="filter" data-filter="mastered">掌握</button>
+        </div>
+        <div class="mini-list" id="miniList"></div>
+      `;
+      bindRadarControls();
+    }
+
+    function renderCombinedQuiz() {
+      state.locked = false;
+      const answer = pickWord();
+      state.current = answer;
+      const choices = sample(words.filter(w => w !== answer), 3).concat(answer).sort(() => Math.random() - .5);
+      panel.innerHTML = `
+        <div class="quiz">
+          <h2 class="section-title">综合练习</h2>
+          <div class="prompt">
+            <button class="icon-btn" title="播放发音" id="sayPrompt">🔊</button>
+            <div class="big-word prompt-label">听一听</div>
+            <small>听英文，输入完整单词或短语，再直接选择中文意思。</small>
+          </div>
+          <div id="dictationStep">
+            <div class="answer-row">
+              <input id="answerInput" type="text" autocomplete="off" placeholder="听到什么就拼出来">
+            </div>
+          </div>
+          <div class="choices" id="meaningStep">
+            ${choices.map(choice => `<button class="choice" data-choice="${choice.word}">${choice.zh}</button>`).join("")}
+          </div>
+          <div class="feedback" id="feedback"></div>
+          <button class="btn secondary" id="next">下一题</button>
+        </div>
+      `;
+      const input = document.querySelector("#answerInput");
+      document.querySelector("#sayPrompt").addEventListener("click", () => speak(answer.sound || answer.word, true));
+      document.querySelector("#next").addEventListener("click", renderCombinedQuiz);
+      input.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+        }
+      });
+      panel.querySelectorAll(".choice").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (state.locked) return;
+          const dictationOk = normalize(input.value) === normalize(answer.word);
+          const meaningOk = btn.dataset.choice === answer.word;
+          input.disabled = true;
+          btn.classList.add(meaningOk ? "correct" : "wrong");
+          panel.querySelector(`[data-choice="${answer.word}"]`).classList.add("correct");
+          panel.querySelectorAll(".choice").forEach(choice => choice.disabled = true);
+          finishCombined(answer, dictationOk, meaningOk);
+        });
+      });
+      setTimeout(() => speak(answer.sound || answer.word, true), 300);
+      input.focus();
+    }
+
+    function checkCombinedDictation(input, answer, rememberResult) {
+      if (state.locked || input.disabled) return;
+      const spellingOk = normalize(input.value) === normalize(answer.word);
+      const feedback = document.querySelector("#feedback");
+      rememberResult(spellingOk);
+      input.disabled = true;
+      document.querySelector("#check").disabled = true;
+      document.querySelector("#meaningStep").style.display = "grid";
+      feedback.textContent = spellingOk
+        ? "听写正确！现在选择中文意思。"
+        : `听写答案是 ${answer.word}。现在选择中文意思。`;
+      feedback.style.color = spellingOk ? "var(--mint-dark)" : "var(--rose)";
+      speak(answer.sound || answer.word, true);
+    }
+
+    function finishCombined(answer, dictationOk, meaningOk) {
+      const ok = dictationOk && meaningOk;
+      state.locked = true;
+      const feedback = document.querySelector("#feedback");
+      feedback.textContent = ok
+        ? `本题通过！${answer.word} = ${answer.zh}`
+        : `本题进错题集：${answer.word} = ${answer.zh}`;
+      feedback.style.color = ok ? "var(--mint-dark)" : "var(--rose)";
+      mark(answer, ok);
+      speak(answer.sound || answer.word, true);
+    }
+
+    function renderSpelling() {
+      state.locked = false;
+      const answer = pickWord();
+      state.current = answer;
+      const choices = sample(words.filter(w => w !== answer), 3).concat(answer).sort(() => Math.random() - .5);
+      panel.innerHTML = `
+        <div class="quiz">
+          <h2 class="section-title">拼写训练</h2>
+          <div class="prompt">
+            <button class="icon-btn" title="播放发音" id="sayPrompt">🔊</button>
+            <div class="big-word prompt-label">听音拼写</div>
+            <small>听英文，输入完整单词或短语，再直接选择中文意思。</small>
+            <button class="btn secondary" id="sayAgain">听一遍</button>
+          </div>
+          <div class="answer-row">
+            <input id="answerInput" type="text" autocomplete="off" placeholder="输入完整英文">
+          </div>
+          <div class="choices" id="meaningStep">
+            ${choices.map(choice => `<button class="choice" data-choice="${choice.word}">${choice.zh}</button>`).join("")}
+          </div>
+          <div class="feedback" id="feedback"></div>
+          <button class="btn secondary" id="next">下一题</button>
+        </div>
+      `;
+      const input = document.querySelector("#answerInput");
+      panel.querySelectorAll("#sayPrompt, #sayAgain").forEach(btn => {
+        btn.addEventListener("click", () => speak(answer.sound || answer.word, true));
+      });
+      document.querySelector("#next").addEventListener("click", renderSpelling);
+      input.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+        }
+      });
+      panel.querySelectorAll(".choice").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (state.locked) return;
+          const dictationOk = normalize(input.value) === normalize(answer.word);
+          const meaningOk = btn.dataset.choice === answer.word;
+          input.disabled = true;
+          btn.classList.add(meaningOk ? "correct" : "wrong");
+          panel.querySelector(`[data-choice="${answer.word}"]`).classList.add("correct");
+          panel.querySelectorAll(".choice").forEach(choice => choice.disabled = true);
+          finishCombined(answer, dictationOk, meaningOk);
+        });
+      });
+      setTimeout(() => speak(answer.sound || answer.word, true), 300);
+      input.focus();
+    }
+
+    function renderWrongBook() {
+      state.locked = false;
+      const wrongWords = words.filter(isWeak);
+      const answer = pickWord("wrong");
+      if (!answer) {
+        panel.innerHTML = `
+          <div class="quiz">
+            <h2 class="section-title">错题集</h2>
+            <div class="prompt">
+              <div class="big-word">目前没有错题</div>
+              <small>去做几道选择、拼写或听写，点错的词会自动来到这里。</small>
+            </div>
+            <button class="btn secondary" id="backToPractice">去综合练习</button>
+          </div>
+        `;
+        document.querySelector("#backToPractice").addEventListener("click", () => {
+          state.view = "combined";
+          render();
+        });
+        return;
+      }
+      state.current = answer;
+      const choices = sample(words.filter(w => w !== answer), 3).concat(answer).sort(() => Math.random() - .5);
+      panel.innerHTML = `
+        <div class="quiz">
+          <div class="side-head">
+            <h2 class="section-title">错题集专练</h2>
+            <button class="small-btn" id="downloadWrong">下载错词</button>
+          </div>
+          <div class="download-status" id="downloadStatus"></div>
+          <div class="prompt">
+            <button class="icon-btn" title="播放发音" id="sayPrompt">🔊</button>
+            <div class="big-word prompt-label">错题听写</div>
+            <small>错题 ${Math.min(state.wrongIndex, wrongWords.length)} / ${wrongWords.length}。输入英文后，选择中文意思。</small>
+          </div>
+          <div class="answer-row">
+            <input id="answerInput" type="text" autocomplete="off" placeholder="重新拼出这个错词">
+          </div>
+          <div class="choices" id="meaningStep">
+            ${choices.map(choice => `<button class="choice" data-choice="${choice.word}">${choice.zh}</button>`).join("")}
+          </div>
+          <div class="feedback" id="feedback"></div>
+          <button class="btn secondary" id="next">下一道错题</button>
+          <button class="btn secondary" id="clearMastered">移出已掌握</button>
+        </div>
+      `;
+      downloadWrongBtn = document.querySelector("#downloadWrong");
+      downloadStatus = document.querySelector("#downloadStatus");
+      if (downloadWrongBtn) {
+        downloadWrongBtn.addEventListener("click", downloadWrongWords);
+      }
+      const input = document.querySelector("#answerInput");
+      document.querySelector("#sayPrompt").addEventListener("click", () => speak(answer.sound || answer.word, true));
+      document.querySelector("#next").addEventListener("click", renderWrongBook);
+      document.querySelector("#clearMastered").addEventListener("click", () => {
+        state.wrongBook = state.wrongBook.filter(wordText => {
+          const word = words.find(item => item.word === wordText);
+          return word && !isMastered(word);
+        });
+        save();
+        render();
+      });
+      input.addEventListener("keydown", event => {
+        if (event.key === "Enter") event.preventDefault();
+      });
+      panel.querySelectorAll(".choice").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (state.locked) return;
+          const dictationOk = normalize(input.value) === normalize(answer.word);
+          const meaningOk = btn.dataset.choice === answer.word;
+          input.disabled = true;
+          btn.classList.add(meaningOk ? "correct" : "wrong");
+          panel.querySelector(`[data-choice="${answer.word}"]`).classList.add("correct");
+          panel.querySelectorAll(".choice").forEach(choice => choice.disabled = true);
+          finishCombined(answer, dictationOk, meaningOk);
+        });
+      });
+      setTimeout(() => speak(answer.sound || answer.word, true), 300);
+      input.focus();
+    }
+
+    function checkTyped(input, answer) {
+      if (state.locked) return;
+      const ok = normalize(input.value) === normalize(answer.word);
+      state.locked = true;
+      const feedback = document.querySelector("#feedback");
+      feedback.textContent = ok && state.view === "wrongbook" && isMastered(answer)
+        ? `正确！${answer.word} 已掌握，可以移出错题集。`
+        : ok ? `正确！${answer.word} = ${answer.zh}` : `再记一下：${answer.word} = ${answer.zh}`;
+      feedback.style.color = ok ? "var(--mint-dark)" : "var(--rose)";
+      mark(answer, ok);
+      speak(answer.sound || answer.word, true);
+    }
+
+    function render() {
+      appTitle.textContent = wordSets[state.day].title;
+      if (daySelect.value !== state.day) daySelect.value = state.day;
+      document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === state.view));
+      if (state.view === "cards") renderCards();
+      if (state.view === "combined") renderCombinedQuiz();
+      if (state.view === "spelling") renderSpelling();
+      if (state.view === "radar") renderRadar();
+      if (state.view === "wrongbook") renderWrongBook();
+      renderStats();
+    }
+
+    function burst() {
+      const confetti = document.querySelector("#confetti");
+      const colors = ["#53b788", "#ffbe4d", "#ff6b6b", "#4dabf7", "#7b61ff"];
+      for (let i = 0; i < 36; i++) {
+        const piece = document.createElement("span");
+        piece.className = "piece";
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDelay = `${Math.random() * .22}s`;
+        confetti.appendChild(piece);
+        setTimeout(() => piece.remove(), 1400);
+      }
+    }
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        state.view = tab.dataset.view;
+        render();
+      });
+    });
+
+    document.querySelector("#dailyMission").addEventListener("click", () => {
+      state.view = "combined";
+      render();
+    });
+
+    renderDayOptions();
+    userIdInput.value = state.userId;
+
+    daySelect.addEventListener("change", () => {
+      switchDay(daySelect.value);
+    });
+
+    document.querySelector("#switchUser").addEventListener("click", () => {
+      switchUser(userIdInput.value);
+    });
+
+    userIdInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") switchUser(userIdInput.value);
+    });
+
+    if (downloadWrongBtn) {
+      downloadWrongBtn.addEventListener("click", downloadWrongWords);
+    }
+
+    render();
+  </script>
+</body>
+</html>
