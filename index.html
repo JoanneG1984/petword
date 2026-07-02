@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Day 19 单词闯关</title>
+  <title>Day 1 单词闯关</title>
   <style>
     :root {
       --ink: #263238;
@@ -97,6 +97,14 @@
       flex: 1;
       min-width: 90px;
       background: white;
+    }
+
+    .login-status {
+      color: var(--mint-dark);
+      font-size: 13px;
+      font-weight: 800;
+      min-height: 20px;
+      padding-left: 8px;
     }
 
     h1 {
@@ -264,6 +272,36 @@
       gap: 8px;
     }
 
+    .word-card.mastered-card {
+      background: #effff4;
+      border-color: rgba(36, 121, 90, .45);
+    }
+
+    .word-card.weak-card {
+      background: #fff1f1;
+      border-color: rgba(255, 107, 107, .58);
+    }
+
+    .word-card.unlearned-card {
+      background: #fff9df;
+      border-color: rgba(255, 190, 77, .62);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .status-pill.mastered { background: #dff7e8; color: var(--mint-dark); }
+    .status-pill.weak { background: #ffe0e0; color: #b42323; }
+    .status-pill.unlearned { background: #fff0b8; color: #8a5b00; }
+    .status-pill.learning { background: #eef7ff; color: #1464a5; }
+
     .word-head {
       display: flex;
       align-items: center;
@@ -282,6 +320,43 @@
     .meaning { font-weight: 700; }
     .example { color: var(--muted); line-height: 1.55; font-size: 16px; }
     .example-zh { color: #45625a; line-height: 1.5; font-size: 15px; }
+
+    .selection-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f5fff8;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .selection-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .check-word {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: auto;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .check-word input {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
 
     .icon-btn, .btn {
       border: 0;
@@ -505,7 +580,7 @@
     <section class="topbar">
       <div class="hero">
         <div>
-          <h1 id="appTitle">Day 19 旅行单词闯关</h1>
+          <h1 id="appTitle">Day 1 单词闯关</h1>
           <p class="subtitle">听发音、选中文、拼单词、做听写。每一关都会记录掌握度，错词会自动进“再练一遍”。</p>
         </div>
         <div class="hero-tools">
@@ -517,8 +592,10 @@
           <div class="user-panel">
             <span>User ID</span>
             <input id="userIdInput" type="text" autocomplete="off" placeholder="例如 Amy 或 001">
-            <button class="btn secondary" id="switchUser">切换</button>
+            <input id="passwordInput" type="password" autocomplete="current-password" placeholder="密码">
+            <button class="btn secondary" id="switchUser">登录</button>
           </div>
+          <div class="login-status" id="loginStatus"></div>
         </div>
       </div>
       <aside class="status">
@@ -543,14 +620,45 @@
   </main>
 
   <script>
+    function firstMeaning(zh) {
+      return String(zh || "").split(/[；;,，]/)[0].trim();
+    }
+
+    function defaultExample(word, zh, pos = "") {
+      const lowerPos = String(pos || "").toLowerCase();
+      const text = String(word || "").trim();
+      const meaning = firstMeaning(zh);
+
+      if (text.includes(" ")) {
+        return [`We practised "${text}" in class today.`, `我们今天在课堂上练习了这个短语。`];
+      }
+
+      if (lowerPos.includes("adj") || /的$/.test(meaning)) {
+        return [`The word "${text}" can help make a sentence clearer.`, `这个词可以让句子表达得更清楚。`];
+      }
+
+      if (lowerPos.includes("adv")) {
+        return [`Please read the sentence ${text}.`, `请用这个词来读句子。`];
+      }
+
+      if (lowerPos.includes("v")) {
+        return [`I can use "${text}" when I write a sentence.`, `我写句子时可以用这个词。`];
+      }
+
+      return [`I wrote "${text}" in my vocabulary notebook.`, `我把这个词写进了单词本。`];
+    }
+
     function makeWords(items) {
-      return items.map(([word, zh, pos = ""]) => ({
-        word,
-        pos,
-        zh,
-        example: `${word} means ${zh}.`,
-        exampleZh: `${word} 的意思是${zh}。`
-      }));
+      return items.map(([word, zh, pos = "", example = "", exampleZh = ""]) => {
+        const fallback = defaultExample(word, zh, pos);
+        return {
+          word,
+          pos,
+          zh,
+          example: example || fallback[0],
+          exampleZh: exampleZh || fallback[1]
+        };
+      });
     }
 
     const wordSets = {
@@ -733,11 +841,102 @@
       ]) }
     };
 
-    let words = wordSets.day19.words;
+    const exampleOverrides = {
+      day1: {
+        wedding: ["We went to Tom and Mary's wedding.", "我们参加了汤姆和玛丽的婚礼。"],
+        vase: ["She put the flowers in a tall vase.", "她把花放进一个高花瓶里。"],
+        unusual: ["It is unusual to see snow here in April.", "四月在这里看到雪很不寻常。"],
+        "chest of drawers": ["My socks are in the chest of drawers.", "我的袜子在五斗柜里。"],
+        rug: ["There is a soft rug beside the bed.", "床边有一块柔软的小地毯。"],
+        cushion: ["I put a cushion on the chair.", "我在椅子上放了一个垫子。"],
+        marriage: ["Their marriage lasted for fifty years.", "他们的婚姻持续了五十年。"],
+        ceremony: ["The opening ceremony started at nine.", "开幕式九点开始。"],
+        childhood: ["She spent her childhood in a small town.", "她在一个小镇度过童年。"],
+        honeymoon: ["They went to Paris for their honeymoon.", "他们去巴黎度蜜月。"],
+        occasion: ["A birthday is a special occasion.", "生日是一个特别的场合。"],
+        neither: ["Neither answer is correct.", "两个答案都不正确。"],
+        rent: ["We pay the rent at the beginning of each month.", "我们每个月初付租金。"],
+        location: ["This is a good location for a new shop.", "这是开新店的好位置。"],
+        cottage: ["They stayed in a cottage near the lake.", "他们住在湖边的一间小屋里。"],
+        antique: ["The shop sells antique clocks.", "这家店卖古董钟。"],
+        cosy: ["The room is small but cosy.", "这个房间虽小但很舒适。"],
+        casual: ["Wear casual clothes to the picnic.", "去野餐穿休闲一点的衣服。"],
+        meanwhile: ["Mum cooked dinner; meanwhile, I set the table.", "妈妈做晚饭；同时，我摆好了餐桌。"],
+        surround: ["Trees surround the old house.", "树木围绕着那座老房子。"],
+        romance: ["The film is a sweet romance.", "这部电影是一个甜蜜的爱情故事。"],
+        tower: ["We climbed the tower to see the city.", "我们爬上塔楼看这座城市。"],
+        locate: ["Can you locate the village on the map?", "你能在地图上找到这个村庄吗？"],
+        district: ["There are many old buildings in this district.", "这个区域有许多老建筑。"],
+        "in love": ["They are in love and very happy.", "他们相爱了，非常开心。"],
+        appearance: ["His appearance changed after the haircut.", "理发后他的外貌变了。"],
+        marry: ["My cousin will marry next spring.", "我的表姐明年春天结婚。"],
+        "hand-held": ["The guide used a hand-held microphone.", "导游用了一个手持麦克风。"],
+        rose: ["He gave his mother a red rose.", "他送给妈妈一朵红玫瑰。"],
+        meaning: ["Do you know the meaning of this word?", "你知道这个词的含义吗？"],
+        sleep: ["A good sleep helps you learn better.", "良好的睡眠能帮助你学得更好。"],
+        board: ["The teacher wrote the answer on the board.", "老师把答案写在黑板上。"],
+        name: ["They decided to name the baby Lily.", "他们决定给宝宝取名莉莉。"],
+        seat: ["Please take a seat near the window.", "请坐在靠窗的位置。"],
+        decorate: ["We decorate the classroom for the party.", "我们为聚会装饰教室。"],
+        curly: ["The little girl has curly hair.", "这个小女孩有一头卷发。"],
+        mention: ["Please do not mention the surprise.", "请不要提到这个惊喜。"],
+        nightmare: ["I had a nightmare last night.", "我昨晚做了一个噩梦。"],
+        "break in": ["Please don't break in while I am speaking.", "我说话时请不要打断。"],
+        twin: ["Jack has a twin brother.", "杰克有一个双胞胎兄弟。"],
+        nephew: ["My nephew is seven years old.", "我的侄子七岁了。"],
+        niece: ["Her niece loves drawing pictures.", "她的侄女喜欢画画。"]
+      }
+    };
+
+    Object.entries(exampleOverrides).forEach(([day, examples]) => {
+      wordSets[day].words.forEach(word => {
+        const example = examples[word.word];
+        if (example) {
+          [word.example, word.exampleZh] = example;
+        }
+      });
+    });
+
+    let words = wordSets.day1.words;
 
     function cleanUserId(value) {
       const text = String(value || "").trim();
       return text || "default";
+    }
+
+    function encodePassword(value) {
+      try {
+        return btoa(unescape(encodeURIComponent(String(value || ""))));
+      } catch (error) {
+        return String(value || "");
+      }
+    }
+
+    function passwordKey(userId) {
+      return `wordPractice:user:${cleanUserId(userId)}:password`;
+    }
+
+    function verifyUserPassword(userId, password) {
+      const cleanId = cleanUserId(userId);
+      const text = String(password || "");
+      const saved = readLocal(passwordKey(cleanId), "");
+      if (saved) {
+        if (saved === encodePassword(text)) return true;
+        alert("密码不正确，请重新输入。");
+        return false;
+      }
+      if (!text.trim()) {
+        alert("请先输入密码。第一次使用这个 User ID 时，会用这个密码建立本地记录。");
+        return false;
+      }
+      try {
+        localStorage.setItem(passwordKey(cleanId), encodePassword(text));
+      } catch (error) {
+        alert("浏览器没有允许保存密码，暂时不能切换用户。");
+        return false;
+      }
+      alert(`已为 ${cleanId} 设置本地登录密码，并加载之前保存的学习记录。`);
+      return true;
     }
 
     function activeUserKey() {
@@ -749,12 +948,7 @@
     }
 
     function activeDayKey() {
-      try {
-        const day = localStorage.getItem("wordPracticeActiveDay") || "day19";
-        return wordSets[day] ? day : "day19";
-      } catch (error) {
-        return "day19";
-      }
+      return "day1";
     }
 
     function storageKey(name) {
@@ -778,9 +972,29 @@
       }
     }
 
+    const MASTERY_TARGET = 2;
+
     function loadWrongBook(userId, day = activeDayKey()) {
       try {
         return JSON.parse(readLocal(`wordPractice:${day}:${userId}:wrongBook`, "[]"));
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function loadMasteredBook(userId, day = activeDayKey()) {
+      try {
+        const mastered = JSON.parse(readLocal(`wordPractice:${day}:${userId}:masteredBook`, "[]"));
+        return Array.isArray(mastered) ? mastered : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function loadSelectedWords(userId, day = activeDayKey()) {
+      try {
+        const selected = JSON.parse(readLocal(`wordPractice:${day}:${userId}:selectedWords`, "[]"));
+        return Array.isArray(selected) ? selected : [];
       } catch (error) {
         return [];
       }
@@ -804,6 +1018,8 @@
       score: loadNumber(activeUserKey(), "score", activeDayKey()),
       attempts: loadAttempts(activeUserKey(), activeDayKey()),
       wrongBook: loadWrongBook(activeUserKey(), activeDayKey()),
+      masteredBook: loadMasteredBook(activeUserKey(), activeDayKey()),
+      selectedWords: loadSelectedWords(activeUserKey(), activeDayKey()),
       queueIndex: loadNumber(activeUserKey(), "queueIndex", activeDayKey()),
       wrongIndex: loadNumber(activeUserKey(), "wrongIndex", activeDayKey())
     };
@@ -816,6 +1032,8 @@
     const leftEl = document.querySelector("#left");
     let barEl = document.querySelector("#bar");
     const userIdInput = document.querySelector("#userIdInput");
+    const passwordInput = document.querySelector("#passwordInput");
+    const loginStatus = document.querySelector("#loginStatus");
     const daySelect = document.querySelector("#daySelect");
     const appTitle = document.querySelector("#appTitle");
     let downloadWrongBtn = document.querySelector("#downloadWrong");
@@ -825,8 +1043,11 @@
       try {
         localStorage.setItem("day19ActiveUser", state.userId);
         localStorage.setItem("wordPracticeActiveDay", state.day);
+        localStorage.setItem("wordPracticeActiveDayV2", state.day);
         localStorage.setItem(storageKey("attempts"), JSON.stringify(state.attempts));
         localStorage.setItem(storageKey("wrongBook"), JSON.stringify(state.wrongBook));
+        localStorage.setItem(storageKey("masteredBook"), JSON.stringify(state.masteredBook));
+        localStorage.setItem(storageKey("selectedWords"), JSON.stringify(state.selectedWords));
         localStorage.setItem(storageKey("queueIndex"), String(state.queueIndex));
         localStorage.setItem(storageKey("wrongIndex"), String(state.wrongIndex));
         localStorage.setItem(storageKey("score"), String(state.score));
@@ -842,17 +1063,30 @@
       state.streak = loadNumber(state.userId, "streak", state.day);
       state.attempts = loadAttempts(state.userId, state.day);
       state.wrongBook = loadWrongBook(state.userId, state.day);
+      state.masteredBook = loadMasteredBook(state.userId, state.day);
+      state.selectedWords = loadSelectedWords(state.userId, state.day);
       state.queueIndex = loadNumber(state.userId, "queueIndex", state.day);
       state.wrongIndex = loadNumber(state.userId, "wrongIndex", state.day);
+      syncMasteredBook();
     }
 
-    function switchUser(userId) {
+    function switchUser(userId, password) {
+      if (!verifyUserPassword(userId, password)) return;
       save();
       state.userId = cleanUserId(userId);
       loadProfile();
       if (userIdInput) userIdInput.value = state.userId;
+      if (passwordInput) passwordInput.value = "";
+      updateLoginStatus();
       save();
       render();
+    }
+
+    function updateLoginStatus() {
+      if (!loginStatus) return;
+      const mastered = state.masteredBook?.length || 0;
+      const wrong = words.filter(isWeak).length;
+      loginStatus.textContent = `已登录：${state.userId}，已掌握 ${mastered} 个，错题 ${wrong} 个`;
     }
 
     function switchDay(day) {
@@ -863,6 +1097,7 @@
       state.filter = "all";
       state.locked = false;
       loadProfile();
+      updateLoginStatus();
       save();
       render();
     }
@@ -878,14 +1113,22 @@
       return state.attempts[word.word] || { right: 0, wrong: 0 };
     }
 
+    function masteredRecord(word) {
+      return (state.masteredBook || []).find(item => item.word === word.word);
+    }
+
     function isMastered(word) {
       const s = wordStats(word);
-      return s.right >= 3;
+      return s.right >= MASTERY_TARGET || Boolean(masteredRecord(word));
     }
 
     function isWeak(word) {
       const s = wordStats(word);
       return state.wrongBook.includes(word.word) && !isMastered(word);
+    }
+
+    function activePracticeWords() {
+      return words.filter(word => !isMastered(word));
     }
 
     function speak(text, slow = false) {
@@ -903,6 +1146,101 @@
       return copy.slice(0, count);
     }
 
+    function selectedWordSet() {
+      return new Set(state.selectedWords || []);
+    }
+
+    function selectedPool() {
+      const selected = selectedWordSet();
+      const pool = words.filter(word => selected.has(word.word) && !isMastered(word));
+      if (pool.length) return pool;
+      if (words.some(word => selected.has(word.word))) return [];
+      return activePracticeWords();
+    }
+
+    function renderPracticeComplete(mode) {
+      const selectedCount = words.filter(isSelectedForQuiz).length;
+      const title = mode === "spelling" ? "拼写训练" : "综合练习";
+      const message = selectedCount
+        ? `勾选的 ${selectedCount} 个单词都已掌握，无需重复出现。`
+        : "当天单词都已掌握，无需重复出现。";
+      panel.innerHTML = `
+        <div class="quiz">
+          <h2 class="section-title">${title}</h2>
+          <div class="prompt">
+            <div class="big-word prompt-label">已掌握</div>
+            <small>${message}</small>
+          </div>
+          <button class="btn secondary" id="backToCards">回到词卡</button>
+          <button class="btn secondary" id="openMastered">查看已掌握词库</button>
+        </div>
+      `;
+      document.querySelector("#backToCards").addEventListener("click", () => {
+        state.view = "cards";
+        render();
+      });
+      document.querySelector("#openMastered").addEventListener("click", () => {
+        state.view = "radar";
+        state.filter = "mastered";
+        render();
+      });
+    }
+
+    function recordMasteredWord(word) {
+      state.wrongBook = state.wrongBook.filter(wordText => wordText !== word.word);
+      if (masteredRecord(word)) return;
+      const s = wordStats(word);
+      state.masteredBook.push({
+        word: word.word,
+        zh: word.zh,
+        example: word.example,
+        masteredAt: new Date().toISOString(),
+        right: s.right,
+        wrong: s.wrong
+      });
+    }
+
+    function syncMasteredBook() {
+      let changed = false;
+      words.forEach(word => {
+        const s = wordStats(word);
+        if (s.right >= MASTERY_TARGET && !masteredRecord(word)) {
+          recordMasteredWord(word);
+          changed = true;
+        }
+        if (isMastered(word) && state.wrongBook.includes(word.word)) {
+          state.wrongBook = state.wrongBook.filter(wordText => wordText !== word.word);
+          changed = true;
+        }
+      });
+      if (changed) save();
+    }
+
+    function isSelectedForQuiz(word) {
+      return selectedWordSet().has(word.word);
+    }
+
+    function cardStatus(word) {
+      const s = wordStats(word);
+      if (isMastered(word)) return { className: "mastered-card", label: "已掌握", pill: "mastered" };
+      if (isWeak(word)) return { className: "weak-card", label: "错题", pill: "weak" };
+      if (s.right === 0 && s.wrong === 0) return { className: "unlearned-card", label: "未学习", pill: "unlearned" };
+      return { className: "learning-card", label: `学习中 ${s.right}/${MASTERY_TARGET}`, pill: "learning" };
+    }
+
+    function updateSelectedWords(wordText, checked) {
+      const selected = selectedWordSet();
+      if (checked) {
+        selected.add(wordText);
+      } else {
+        selected.delete(wordText);
+      }
+      state.selectedWords = words
+        .filter(word => selected.has(word.word))
+        .map(word => word.word);
+      save();
+    }
+
     function pickWord(source = "all") {
       if (source === "wrong") {
         const wrongWords = words.filter(isWeak);
@@ -912,7 +1250,9 @@
         save();
         return word;
       }
-      const word = words[state.queueIndex % words.length];
+      const pool = source === "selected" ? selectedPool() : activePracticeWords();
+      if (!pool.length) return null;
+      const word = pool[state.queueIndex % pool.length];
       state.queueIndex += 1;
       save();
       return word;
@@ -950,7 +1290,7 @@
     }
 
     function downloadWrongWords() {
-      const wrongWords = words.filter(word => state.wrongBook.includes(word.word));
+      const wrongWords = words.filter(isWeak);
       if (!wrongWords.length) {
         downloadStatus.textContent = "当前没有错词。";
         return;
@@ -1024,8 +1364,11 @@
     function mark(word, ok) {
       const s = wordStats(word);
       state.attempts[word.word] = { right: s.right + (ok ? 1 : 0), wrong: s.wrong + (ok ? 0 : 1) };
-      if (!ok && !state.wrongBook.includes(word.word)) {
+      if (!ok && !isMastered(word) && !state.wrongBook.includes(word.word)) {
         state.wrongBook.push(word.word);
+      }
+      if (isMastered(word)) {
+        recordMasteredWord(word);
       }
       state.streak = ok ? state.streak + 1 : 0;
       state.score += ok ? 1 : 0;
@@ -1035,6 +1378,7 @@
     }
 
     function renderStats() {
+      syncMasteredBook();
       const mastered = words.filter(isMastered).length;
       scoreEl.textContent = state.score;
       streakEl.textContent = state.streak;
@@ -1053,17 +1397,32 @@
       });
       miniList.innerHTML = filtered.map(word => {
         const s = wordStats(word);
-        const badge = isMastered(word) ? "掌握" : isWeak(word) ? "错题" : `${s.right}/3`;
-        return `<div class="mini-word"><span><b>${word.word}</b><br>${word.zh}</span><span class="badge">${badge}</span></div>`;
+        const record = masteredRecord(word);
+        const date = record?.masteredAt ? new Date(record.masteredAt).toLocaleDateString() : "";
+        const detail = record ? `<br><small>已掌握：${date || "已记录"}</small>` : "";
+        const badge = isMastered(word) ? "掌握" : isWeak(word) ? "错题" : `${s.right}/${MASTERY_TARGET}`;
+        return `<div class="mini-word"><span><b>${word.word}</b><br>${word.zh}${detail}</span><span class="badge">${badge}</span></div>`;
       }).join("");
     }
 
     function renderCards() {
+      const selectedCount = words.filter(isSelectedForQuiz).length;
       panel.innerHTML = `
         <h2 class="section-title">先认识，再闯关</h2>
+        <div class="selection-bar">
+          <span>已勾选 ${selectedCount} 个；不勾选时，练习使用当天未掌握单词</span>
+          <div class="selection-actions">
+            <button class="small-btn" id="practiceSelected">送去综合练习</button>
+            <button class="small-btn" id="spellSelected">送去拼写训练</button>
+            <button class="small-btn" id="selectAllWords">全选本 Day</button>
+            <button class="small-btn" id="clearSelectedWords">清空勾选</button>
+          </div>
+        </div>
         <div class="word-grid">
-          ${words.map(word => `
-            <article class="word-card">
+          ${words.map(word => {
+            const status = cardStatus(word);
+            return `
+            <article class="word-card ${status.className}">
               <div class="word-head">
                 <div>
                   <div class="word">${word.word}</div>
@@ -1071,15 +1430,44 @@
                 </div>
                 <button class="icon-btn" title="播放发音" aria-label="播放 ${word.word}" data-say="${word.sound || word.word}">🔊</button>
               </div>
+              <span class="status-pill ${status.pill}">${status.label}</span>
               <div class="meaning">${word.zh}</div>
               <div class="example">${word.example}</div>
               <div class="example-zh">${word.exampleZh}</div>
+              <label class="check-word">
+                <input type="checkbox" data-select-word="${encodeURIComponent(word.word)}" ${isSelectedForQuiz(word) ? "checked" : ""}>
+                <span>加入练习词库</span>
+              </label>
             </article>
-          `).join("")}
+          `}).join("")}
         </div>
       `;
       panel.querySelectorAll("[data-say]").forEach(btn => {
         btn.addEventListener("click", () => speak(btn.dataset.say, true));
+      });
+      panel.querySelectorAll("[data-select-word]").forEach(input => {
+        input.addEventListener("change", () => {
+          updateSelectedWords(decodeURIComponent(input.dataset.selectWord), input.checked);
+          renderCards();
+        });
+      });
+      document.querySelector("#selectAllWords").addEventListener("click", () => {
+        state.selectedWords = words.map(word => word.word);
+        save();
+        renderCards();
+      });
+      document.querySelector("#practiceSelected").addEventListener("click", () => {
+        state.view = "combined";
+        render();
+      });
+      document.querySelector("#spellSelected").addEventListener("click", () => {
+        state.view = "spelling";
+        render();
+      });
+      document.querySelector("#clearSelectedWords").addEventListener("click", () => {
+        state.selectedWords = [];
+        save();
+        renderCards();
       });
     }
 
@@ -1108,7 +1496,7 @@
         <div class="filters">
           <button class="filter" data-filter="all">全部</button>
           <button class="filter" data-filter="weak">错词</button>
-          <button class="filter" data-filter="mastered">掌握</button>
+          <button class="filter" data-filter="mastered">已掌握词库</button>
         </div>
         <div class="mini-list" id="miniList"></div>
       `;
@@ -1117,7 +1505,11 @@
 
     function renderCombinedQuiz() {
       state.locked = false;
-      const answer = pickWord();
+      const answer = pickWord("selected");
+      if (!answer) {
+        renderPracticeComplete("combined");
+        return;
+      }
       state.current = answer;
       const choices = sample(words.filter(w => w !== answer), 3).concat(answer).sort(() => Math.random() - .5);
       panel.innerHTML = `
@@ -1193,7 +1585,11 @@
 
     function renderSpelling() {
       state.locked = false;
-      const answer = pickWord();
+      const answer = pickWord("selected");
+      if (!answer) {
+        renderPracticeComplete("spelling");
+        return;
+      }
       state.current = answer;
       const choices = sample(words.filter(w => w !== answer), 3).concat(answer).sort(() => Math.random() - .5);
       panel.innerHTML = `
@@ -1338,6 +1734,7 @@
     function render() {
       appTitle.textContent = wordSets[state.day].title;
       if (daySelect.value !== state.day) daySelect.value = state.day;
+      updateLoginStatus();
       document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === state.view));
       if (state.view === "cards") renderCards();
       if (state.view === "combined") renderCombinedQuiz();
@@ -1381,11 +1778,15 @@
     });
 
     document.querySelector("#switchUser").addEventListener("click", () => {
-      switchUser(userIdInput.value);
+      switchUser(userIdInput.value, passwordInput.value);
     });
 
     userIdInput.addEventListener("keydown", event => {
-      if (event.key === "Enter") switchUser(userIdInput.value);
+      if (event.key === "Enter") switchUser(userIdInput.value, passwordInput.value);
+    });
+
+    passwordInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") switchUser(userIdInput.value, passwordInput.value);
     });
 
     if (downloadWrongBtn) {
