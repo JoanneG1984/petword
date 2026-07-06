@@ -624,28 +624,123 @@
       return String(zh || "").split(/[；;,，]/)[0].trim();
     }
 
+    const specificExamples = {
+      bride: ["The bride wore a simple white dress.", "新娘穿着一条简单的白色连衣裙。"],
+      handsome: ["He looked very handsome in his new suit.", "他穿上新西装显得很英俊。"],
+      cheek: ["He kissed her on both cheeks.", "他亲吻了她的双颊。"],
+      fountain: ["The children played near the fountain.", "孩子们在喷泉旁边玩耍。"],
+      mate: ["I was with a mate from school.", "我当时和一个学校朋友在一起。"],
+      ladder: ["He climbed the ladder to clean the window.", "他爬上梯子去擦窗户。"],
+      mend: ["He's mending slowly after the operation.", "手术后，他正在慢慢好转。"],
+      loan: ["They took out a loan to buy a small flat.", "他们贷款买了一套小公寓。"],
+      property: ["The family owns property near the river.", "这家人在河边有房产。"],
+      flatmate: ["My flatmate usually cooks dinner on Fridays.", "我的合租室友通常周五做晚饭。"],
+      kid: ["The kids were playing football in the street.", "孩子们正在街上踢足球。"],
+      bath: ["It's your turn to bath the baby.", "轮到你给婴儿洗澡了。"],
+      "apartment block": ["They live on the fifth floor of an apartment block.", "他们住在一栋公寓楼的五楼。"],
+      dustbin: ["She put the rubbish into a dustbin.", "她把垃圾倒进了垃圾箱。"],
+      bulb: ["The bulb in the kitchen needs changing.", "厨房里的灯泡需要换了。"],
+      repair: ["Dad is trying to repair the old radio.", "爸爸正在设法修理那台旧收音机。"],
+      pipe: ["Water was leaking from a pipe under the sink.", "水从水槽下面的一根管子漏出来。"],
+      electrical: ["The shop sells electrical appliances.", "这家商店卖电器。"],
+      heater: ["We turned on the heater because the room was cold.", "房间很冷，所以我们打开了加热器。"],
+      microwave: ["Heat the soup in the microwave for two minutes.", "把汤放进微波炉加热两分钟。"],
+      freezer: ["There is some ice cream in the freezer.", "冷冻柜里有一些冰淇淋。"],
+      situated: ["My bedroom was situated on the top floor of the house.", "我的卧室在房子的顶层。"],
+      neighbourhood: ["There isn't a post office in the neighbourhood.", "附近没有邮局。"],
+      tube: ["We came by tube.", "我们是乘地铁来的。"],
+      line: ["The train runs on the East Coast line.", "这列火车行驶在东海岸铁路线上。"],
+      balcony: ["She stood on the balcony and looked at the sea.", "她站在阳台上望着大海。"],
+      "look up": ["Most people never look up at the sky.", "大多数人从不仰望天空。"],
+      occasionally: ["We occasionally meet for a drink after work.", "我们下班后偶尔小聚喝一杯。"],
+      lock: ["The key has stuck in the lock.", "钥匙卡在锁里了。"],
+      alarm: ["A smoke alarm can save lives.", "烟雾警报器可以救命。"],
+      ground: ["The leaves fell to the ground.", "树叶落到了地上。"],
+      dust: ["The books were all covered with dust.", "这些书上都积满了灰尘。"],
+      dishwasher: ["We put the plates in the dishwasher.", "我们把盘子放进洗碗机。"],
+      kettle: ["She filled the kettle and made some tea.", "她把水壶装满水，泡了些茶。"],
+      "air conditioning": ["The air conditioning keeps the office cool.", "空调让办公室保持凉爽。"],
+      "central heating": ["The house has central heating.", "这栋房子有中央暖气。"],
+      load: ["He can't bear the load of bringing up his family alone.", "他无法独自承担养家的重担。"],
+      "bring up": ["She was brought up by her grandparents.", "她是由祖父母抚养长大的。"],
+      messy: ["The house is always messy.", "这栋房子总是乱糟糟的。"],
+      dusty: ["We drove along a dusty road.", "我们沿着一条尘土飞扬的路开车。"],
+      "tidy up": ["Can you tidy up your office?", "你能把办公室收拾干净吗？"]
+    };
+
+    function hashText(text) {
+      return Array.from(String(text || "")).reduce((total, char) => total + char.charCodeAt(0), 0);
+    }
+
     function defaultExample(word, zh, pos = "") {
+      if (specificExamples[word]) return specificExamples[word];
       const lowerPos = String(pos || "").toLowerCase();
       const text = String(word || "").trim();
       const meaning = firstMeaning(zh);
+      const pick = (items) => items[hashText(text) % items.length];
 
       if (text.includes(" ")) {
-        return [`We practised "${text}" in class today.`, `我们今天在课堂上练习了这个短语。`];
+        if (/^by /.test(text)) return [`We travelled ${text} because it was faster.`, ""];
+        if (/^on /.test(text)) return [`They were ${text} when the message arrived.`, ""];
+        if (/ up$/.test(text)) return [`Please ${text} before you leave the room.`, ""];
+        if (/^(get|take|keep|carry|look|set|check|sign|give|hand|bring|tidy|turn|break|run|throw|go) /.test(text)) {
+          return [`Can you ${text} before dinner?`, ""];
+        }
+        return pick([
+          [`We talked about ${text} during the lesson.`, ""],
+          [`The guide explained ${text} with a clear example.`, ""],
+          [`I heard the phrase "${text}" in a travel programme.`, ""],
+          [`This sentence shows how to use "${text}" naturally.`, ""]
+        ]);
       }
 
       if (lowerPos.includes("adj") || /的$/.test(meaning)) {
-        return [`The word "${text}" can help make a sentence clearer.`, `这个词可以让句子表达得更清楚。`];
+        return pick([
+          [`The room was ${text} and comfortable.`, ""],
+          [`She gave me a ${text} smile.`, ""],
+          [`It was a ${text} answer to a difficult question.`, ""],
+          [`The weather became ${text} before lunch.`, ""],
+          [`He felt ${text} after the long day.`, ""],
+          [`This is a ${text} way to solve the problem.`, ""]
+        ]);
       }
 
       if (lowerPos.includes("adv")) {
-        return [`Please read the sentence ${text}.`, `请用这个词来读句子。`];
+        return pick([
+          [`She answered the question ${text}.`, ""],
+          [`The children walked ${text} into the classroom.`, ""],
+          [`He smiled ${text} when he heard the news.`, ""],
+          [`We meet there ${text} after school.`, ""]
+        ]);
       }
 
       if (lowerPos.includes("v")) {
-        return [`I can use "${text}" when I write a sentence.`, `我写句子时可以用这个词。`];
+        return pick([
+          [`Please ${text} the answer before you write it down.`, ""],
+          [`They decided to ${text} the old plan.`, ""],
+          [`We need to ${text} the problem carefully.`, ""],
+          [`The teacher asked us to ${text} the sentence again.`, ""],
+          [`Can you ${text} what happened yesterday?`, ""]
+        ]);
       }
 
-      return [`I wrote "${text}" in my vocabulary notebook.`, `我把这个词写进了单词本。`];
+      if (/(tion|ment|ness|ity|ence|ance|ship)$/.test(text)) {
+        return pick([
+          [`The discussion helped us understand the ${text}.`, ""],
+          [`Her ${text} surprised everyone in the class.`, ""],
+          [`This book gives a clear example of ${text}.`, ""],
+          [`The teacher explained the ${text} in simple words.`, ""]
+        ]);
+      }
+
+      return pick([
+        [`There is a ${text} near the door.`, ""],
+        [`I saw a ${text} in the picture.`, ""],
+        [`The children found a ${text} in the garden.`, ""],
+        [`She bought a new ${text} for her room.`, ""],
+        [`He pointed to the ${text} on the table.`, ""],
+        [`The story begins with a small ${text}.`, ""]
+      ]);
     }
 
     function makeWords(items) {
@@ -887,6 +982,156 @@
         niece: ["Her niece loves drawing pictures.", "她的侄女喜欢画画。"]
       }
     };
+
+    Object.assign(exampleOverrides, {
+      day3: {
+        law: ["In Sweden it is against the law to hit a child.", ""],
+        attend: ["The two children attend the same school.", ""],
+        graduation: ["They asked what his plans were after graduation.", ""],
+        certificate: ["She's going in for the Cambridge First Certificate.", ""],
+        choice: ["We are faced with a difficult choice.", ""],
+        essential: ["Money is not essential to happiness.", ""],
+        vocabulary: ["Reading will increase your vocabulary.", ""]
+      },
+      day4: {
+        pronounce: ["Very few people can pronounce my name correctly.", ""],
+        talented: ["She is a very talented dancer and won many prizes.", ""],
+        exam: ["You must stop writing and hand in your papers when the exam time is up.", ""]
+      },
+      day5: {
+        feed: ["Some children are feeding bread to the lovely cat.", ""],
+        tuna: ["Tuna can also be grilled.", ""],
+        replace: ["You can't replace the water with drinks.", ""]
+      },
+      day6: {
+        ingredient: ["Mix all these ingredients together.", ""]
+      },
+      day7: {
+        beneath: ["The parking beneath the building is very large.", ""],
+        suitable: ["This programme is not suitable for children.", ""],
+        item: ["This item can't be washed in a washing machine.", ""],
+        bargain: ["The car is a bargain at that price.", ""]
+      },
+      day8: {
+        raise: ["She raised her eyes from her work.", ""],
+        match: ["This blue sweater is a good match for your skin.", ""],
+        fashionable: ["Jeans are very fashionable among the young.", ""]
+      },
+      day9: {
+        expect: ["Parents expect all their children to be successful in the future.", ""],
+        keen: ["My friend is very keen to help others.", ""],
+        particular: ["My brother loves science fiction in particular.", ""],
+        "go on": ["Go on with your work.", ""]
+      },
+      day10: {
+        though: ["He did reply, though not immediately.", ""],
+        partly: ["He was only partly responsible for the accident.", ""],
+        "opening hours": ["Opening hours are from 9 am to 6 pm each day.", ""],
+        rope: ["We tied the rope around our waists.", ""],
+        imagination: ["The teacher said my story lacked imagination.", ""]
+      },
+      day11: {
+        complete: ["The homework should be completed within one hour.", ""],
+        demand: ["This sport demands both speed and strength.", ""],
+        delighted: ["She was delighted at the news of the holiday.", ""],
+        encourage: ["My parents have always encouraged me to make my own decision.", ""],
+        cover: ["He laughed to cover his sadness.", ""],
+        relaxed: ["She had a very relaxed manner.", ""]
+      },
+      day12: {
+        amazed: ["We were amazed at his knowledge of insects.", ""],
+        attract: ["The theme park has attracted many visitors.", ""],
+        challenging: ["My friend gave me a challenging look.", ""]
+      },
+      day13: {
+        glance: ["She glanced at her watch.", ""],
+        notice: ["They pinned a notice to the door.", ""],
+        appear: ["A bus appeared round the corner.", ""],
+        whenever: ["You can ask for help whenever you need it.", ""]
+      },
+      day14: {
+        crash: ["He crashed his car into a wall.", ""],
+        despite: ["Despite the bad weather he had a good time.", ""],
+        whatever: ["Do whatever you like.", ""],
+        declare: ["The area has been declared a nature reserve.", ""],
+        wing: ["The bird flapped its wings noisily.", ""]
+      },
+      day15: {
+        barber: ["He found a barber to have his hair cut short.", ""],
+        pile: ["You have to do piles of work when you come back.", ""]
+      },
+      day16: {
+        rob: ["The woman was robbed of her handbag in the street.", ""]
+      },
+      day17: {
+        heroine: ["She was chosen as the heroine of the new movie.", ""],
+        independent: ["We should learn to become more independent.", ""]
+      },
+      day18: {
+        admit: ["Each ticket admits one child only.", ""],
+        individual: ["He invited each individual student in our class.", ""],
+        row: ["We sat in a row at the back of the classroom.", ""],
+        social: ["We should improve our social skills gradually.", ""],
+        till: ["They had to wait till next week to go to the movies.", ""],
+        "base on": ["The novel is based on a true experience.", ""],
+        conclusion: ["The conclusion of the novel was a little disappointing.", ""],
+        "out of order": ["The new phone is out of order again.", ""]
+      },
+      day21: {
+        marvellous: ["The weather is marvellous.", ""],
+        "get along well with": ["We should learn to get along well with neighbours.", ""],
+        creature: ["Every creature on the earth should be treated as an equal member of nature.", ""]
+      },
+      day22: {
+        announce: ["They will announce the result of the vote tonight.", ""],
+        beat: ["Someone is beating a drum.", ""],
+        cattle: ["The cattle are fed on grass.", ""],
+        "at all": ["She couldn't see or hear anything at all.", ""]
+      },
+      day23: {
+        illness: ["She is still weak after her illness.", ""],
+        workout: ["She does a 20-minute workout every day.", ""],
+        suffer: ["He suffered terribly the last few days.", ""],
+        "take exercise": ["We should take exercise every day.", ""]
+      },
+      day24: {
+        damage: ["Smoking seriously damages people's health.", ""],
+        competitor: ["The first prize was awarded to the youngest competitor.", ""],
+        compete: ["We can't compete with them on price.", ""],
+        train: ["He is training us to be teachers.", ""]
+      },
+      day25: {
+        likely: ["He is hardly likely to admit he was wrong.", ""],
+        "climate change": ["Climate change is still a subject for debate.", ""],
+        efficient: ["The creation of an efficient transport system is critical.", ""],
+        remain: ["The three men remained silent.", ""],
+        "carry on": ["Carry on with your work while I'm away.", ""],
+        step: ["He took a step towards the door.", ""]
+      },
+      day26: {
+        benefit: ["The activity will benefit every student.", ""],
+        support: ["These measures are strongly supported by environmental groups.", ""],
+        remove: ["He removed his hand from her shoulder.", ""],
+        sensible: ["The former option would be much more sensible.", ""],
+        strict: ["They are always very strict with their children.", ""],
+        supply: ["Fruit can supply us with the daily vitamin we need.", ""],
+        gain: ["I was able to gain invaluable experience over that year.", ""]
+      },
+      day27: {
+        "face to face": ["We can talk face to face using a smartphone.", ""],
+        dial: ["He lifted the phone and dialed her number.", ""],
+        "at once": ["She fell in with my idea at once.", ""],
+        install: ["The shower is easy to install.", ""],
+        "social media": ["Social media has become a platform for advertisements.", ""],
+        disadvantage: ["There are disadvantages to the plan.", ""]
+      },
+      day28: {
+        delivery: ["Please pay for goods on delivery.", ""],
+        regular: ["Taking regular exercise benefits your health.", ""],
+        "keep in contact with": ["We do keep in contact with each other.", ""],
+        "on request": ["More detailed information is available on request.", ""]
+      }
+    });
 
     Object.entries(exampleOverrides).forEach(([day, examples]) => {
       wordSets[day].words.forEach(word => {
