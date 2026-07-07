@@ -672,87 +672,916 @@
       return Array.from(String(text || "")).reduce((total, char) => total + char.charCodeAt(0), 0);
     }
 
+    const curatedExamples = {
+      qualified: ["A qualified teacher can make a hard lesson easier.", "合格的老师能让困难的课程变得更容易。"],
+      education: ["Good education gives children more choices.", "良好的教育给孩子更多选择。"],
+      expert: ["She is an expert on modern literature.", "她是现代文学方面的专家。"],
+      familiar: ["This song sounds familiar to me.", "这首歌我听起来很熟悉。"],
+      basic: ["This is a basic skill for every student.", "这是每个学生都需要的基本技能。"],
+      elementary: ["The course starts at an elementary level.", "这门课程从基础水平开始。"],
+      alphabet: ["Children learn the alphabet before they spell words.", "孩子们先学习字母表，再学习拼写单词。"],
+      consonant: ["The word begins with a consonant.", "这个单词以一个辅音开头。"],
+      vowel: ["Each syllable usually has a vowel sound.", "每个音节通常都有一个元音音素。"],
+      "self-service": ["We had lunch in a self-service restaurant.", "我们在一家自助餐厅吃午饭。"],
+      diet: ["A balanced diet helps you stay healthy.", "均衡饮食有助于保持健康。"],
+      "motor-racing": ["Motor-racing can be exciting but dangerous.", "赛车运动可能很刺激，但也很危险。"],
+      pitch: ["The football pitch was wet after the rain.", "雨后足球场很湿。"],
+      explode: ["The balloon may explode if you blow it up too much.", "如果吹得太满，气球可能会爆炸。"],
+      sharp: ["Be careful with that sharp knife.", "小心那把锋利的刀。"],
+      "give up": ["Don't give up when the work gets difficult.", "遇到困难时不要放弃。"],
+      accept: ["She was happy to accept the invitation.", "她很高兴接受邀请。"],
+      "keep on": ["Keep on trying until you get the answer right.", "继续努力，直到你答对为止。"],
+      grill: ["Are there any other vegetables to grill?", "还有别的蔬菜可以烤吗？"],
+      hit: ["Our teachers never hit students who make mistakes.", "我们的老师从不打犯错的学生。"],
+      "out of breath": ["She was out of breath after running upstairs.", "她跑上楼后气喘吁吁。"],
+      "traffic jam": ["We were late because of a traffic jam.", "我们因为交通堵塞迟到了。"],
+      "global warming": ["Global warming affects weather around the world.", "全球变暖影响世界各地的天气。"],
+      unfortunately: ["Unfortunately, we missed the last bus.", "不幸的是，我们错过了末班车。"],
+      reply: ["Please reply to my email before Friday.", "请在周五前回复我的邮件。"],
+      loudly: ["Please don't speak loudly in the library.", "请不要在图书馆里大声说话。"],
+      interrupt: ["Please don't interrupt while others are speaking.", "别人说话时请不要打断。"],
+      argument: ["They had an argument about the plan.", "他们就这个计划争论了一番。"],
+      explanation: ["The teacher gave a clear explanation.", "老师给出了清楚的解释。"],
+      invention: ["The telephone was an important invention.", "电话是一项重要的发明。"],
+      communication: ["Good communication makes teamwork easier.", "良好的沟通让团队合作更容易。"],
+      connection: ["The internet connection is slow today.", "今天网络连接很慢。"]
+    };
+
     function defaultExample(word, zh, pos = "") {
       if (specificExamples[word]) return specificExamples[word];
+      if (curatedExamples[word]) return curatedExamples[word];
       const lowerPos = String(pos || "").toLowerCase();
       const text = String(word || "").trim();
-      const meaning = firstMeaning(zh);
+      const meaning = firstMeaning(zh) || text;
       const pick = (items) => items[hashText(text) % items.length];
+      const pair = (en, cn) => [en, cn];
+      const has = (items) => items.includes(text);
+      const article = /^[aeiou]/i.test(text) ? "an" : "a";
 
       if (text.includes(" ")) {
-        if (/^by /.test(text)) return [`We travelled ${text} because it was faster.`, ""];
-        if (/^on /.test(text)) return [`They were ${text} when the message arrived.`, ""];
-        if (/ up$/.test(text)) return [`Please ${text} before you leave the room.`, ""];
+        if (/^by /.test(text)) return pair(`We travelled ${text} to save time.`, `我们选择${meaning}，这样可以节省时间。`);
+        if (/^on /.test(text)) return pair(`They were ${text} when the message arrived.`, `消息到达时，他们正${meaning}。`);
+        if (text === "in order to") return pair("I saved money in order to buy a new bike.", "我存钱是为了买一辆新自行车。");
+        if (text === "look forward to") return pair("I look forward to seeing you again.", "我期待再次见到你。");
+        if (text === "feel ill") return pair("She began to feel ill after lunch.", "午饭后她开始感到不适。");
+        if (text === "get better") return pair("I hope you get better soon.", "我希望你很快康复。");
+        if (text === "get down") return pair("Bad news can get down even cheerful people.", "坏消息甚至会让开朗的人沮丧。");
+        if (/ up$/.test(text)) return pair(`Please ${text} before you leave.`, `离开前请${meaning}。`);
+        if (/^at /.test(text)) return pair(`The answer came to me ${text}.`, `答案${meaning}地出现在我脑海里。`);
         if (/^(get|take|keep|carry|look|set|check|sign|give|hand|bring|tidy|turn|break|run|throw|go) /.test(text)) {
-          return [`Can you ${text} before dinner?`, ""];
+          return pair(`Can you ${text} after class?`, `你能课后${meaning}吗？`);
+        }
+        if (/school|studies|homework|composition|questionnaire/.test(text)) {
+          return pair(`The teacher gave clear advice about ${text}.`, `老师就${meaning}给出了清楚的建议。`);
+        }
+        if (/sport|skiing|racing|jump|hockey|riding|track|room/.test(text)) {
+          return pair(`The coach introduced ${text} before the race.`, `比赛前教练介绍了${meaning}。`);
+        }
+        if (/warming|change|transport|bin|bank|traffic/.test(text)) {
+          return pair(`The poster asked people to care about ${text}.`, `海报呼吁人们关注${meaning}。`);
+        }
+        if (/media|page|clip|face|contact|request/.test(text)) {
+          return pair(`We used ${text} to share the news quickly.`, `我们用${meaning}快速分享了消息。`);
         }
         return pick([
-          [`We talked about ${text} during the lesson.`, ""],
-          [`The guide explained ${text} with a clear example.`, ""],
-          [`I heard the phrase "${text}" in a travel programme.`, ""],
-          [`This sentence shows how to use "${text}" naturally.`, ""]
+          pair(`The teacher used "${text}" in a short dialogue.`, `老师在一段简短对话中用了“${text}”。`),
+          pair(`The conversation showed how to use "${text}" naturally.`, `这段对话展示了如何自然地使用“${text}”。`),
+          pair(`The story gives a natural use of "${text}".`, `这个故事自然地用到了“${text}”。`),
+          pair(`We heard "${text}" during the listening task.`, `我们在听力任务中听到了“${text}”。`)
         ]);
       }
 
-      if (lowerPos.includes("adj") || /的$/.test(meaning)) {
+      if (has(["spinach", "broccoli", "cabbage", "lamb", "corn", "salmon", "tuna", "pineapple", "peach", "coconut", "turkey", "lettuce", "cucumber", "beef"])) {
+        return pair(`Mum added some ${text} to the meal.`, `妈妈在这顿饭里加了一些${meaning}。`);
+      }
+
+      if (has(["grill", "fry", "stir", "spill", "replace", "contain", "feed", "taste", "bite"])) {
+        return pair(`Please ${text} it carefully before lunch.`, `午饭前请认真${meaning}它。`);
+      }
+
+      if (has(["advert", "supermarket", "quality", "pattern", "deposit", "refund", "cash", "label", "logo", "sleeve", "collar", "button", "queue"])) {
+        return pair(`I checked the ${text} before buying the coat.`, `买外套前我查看了${meaning}。`);
+      }
+
+      if (has(["gym", "ankle", "knee", "bandage", "bone", "pill", "fever", "throat", "clinic", "flu", "aspirin", "prescription"])) {
+        return pair(`The doctor checked the ${text} carefully.`, `医生仔细检查了${meaning}。`);
+      }
+
+      if (has(["universe", "planet", "rainforest", "cave", "stone", "stream", "valley", "waterfall", "cliff", "coast", "shore", "sunrise", "sunset", "ocean", "continent", "zebra", "giraffe", "kangaroo", "penguin", "mosquito"])) {
+        return pair(`We learned about the ${text} in our nature lesson.`, `我们在自然课上学习了${meaning}。`);
+      }
+
+      if (has(["fax", "operator", "data", "blogger", "webcam", "calculator", "hardware", "server", "machine", "robot", "bug", "parcel"])) {
+        return pair(`The ${text} helped us finish the task faster.`, `${meaning}帮助我们更快完成了任务。`);
+      }
+
+      if (has(["employer", "candidate", "novelist", "actress", "designer", "barber", "hairdresser", "detective", "director", "guard", "accountant", "lawyer", "policeman", "salesman", "saleswoman", "diver", "captain", "porter", "postman", "baker", "sailor", "architect", "firefighter", "scientist", "lecturer", "professor", "vet", "soldier", "coach", "builder"])) {
+        return pair(`The ${text} arrived early for work.`, `这位${meaning}很早就到岗了。`);
+      }
+
+      if (has(["motor-racing", "pitch", "boxing", "squash", "athletics", "score", "race", "contest", "champion", "athlete", "swimmer", "helmet", "league", "tournament"])) {
+        return pair(`The team practised ${text} after school.`, `这支队伍放学后练习${meaning}。`);
+      }
+
+      if (likelyAdjective(text, zh, pos)) {
         return pick([
-          [`The room was ${text} and comfortable.`, ""],
-          [`She gave me a ${text} smile.`, ""],
-          [`It was a ${text} answer to a difficult question.`, ""],
-          [`The weather became ${text} before lunch.`, ""],
-          [`He felt ${text} after the long day.`, ""],
-          [`This is a ${text} way to solve the problem.`, ""]
+          pair(`The task was ${text}, but we finished it together.`, `这个任务很${meaning}，但我们一起完成了。`),
+          pair(`She felt ${text} before the exam.`, `考试前她感到${meaning}。`),
+          pair(`It was a ${text} choice for the team.`, `这对团队来说是一个${meaning}的选择。`),
+          pair(`His idea sounded ${text} at first.`, `他的想法一开始听起来很${meaning}。`)
         ]);
       }
 
-      if (lowerPos.includes("adv")) {
+      if (likelyAdverb(text, pos) || /地$/.test(meaning)) {
         return pick([
-          [`She answered the question ${text}.`, ""],
-          [`The children walked ${text} into the classroom.`, ""],
-          [`He smiled ${text} when he heard the news.`, ""],
-          [`We meet there ${text} after school.`, ""]
+          pair(`She answered the question ${text}.`, `她${meaning}回答了这个问题。`),
+          pair(`The children walked ${text} into the classroom.`, `孩子们${meaning}走进教室。`),
+          pair(`He smiled ${text} when he heard the news.`, `听到这个消息时，他${meaning}笑了。`),
+          pair(`We usually meet there ${text} after school.`, `放学后我们通常${meaning}在那里见面。`)
         ]);
       }
 
-      if (lowerPos.includes("v")) {
+      if (likelyVerb(text, zh, pos)) {
         return pick([
-          [`Please ${text} the answer before you write it down.`, ""],
-          [`They decided to ${text} the old plan.`, ""],
-          [`We need to ${text} the problem carefully.`, ""],
-          [`The teacher asked us to ${text} the sentence again.`, ""],
-          [`Can you ${text} what happened yesterday?`, ""]
+          pair(`They decided to ${text} the problem together.`, `他们决定一起${meaning}这个问题。`),
+          pair(`We need to ${text} carefully before we answer.`, `回答前我们需要认真${meaning}。`),
+          pair(`Can you ${text} what happened yesterday?`, `你能${meaning}昨天发生的事吗？`),
+          pair(`The students learned to ${text} during the activity.`, `学生们在活动中学会了${meaning}。`)
         ]);
       }
 
       if (/(tion|ment|ness|ity|ence|ance|ship)$/.test(text)) {
         return pick([
-          [`The discussion helped us understand the ${text}.`, ""],
-          [`Her ${text} surprised everyone in the class.`, ""],
-          [`This book gives a clear example of ${text}.`, ""],
-          [`The teacher explained the ${text} in simple words.`, ""]
+          pair(`The class discussed ${text} today.`, `今天课堂讨论了${meaning}。`),
+          pair(`Her ${text} surprised everyone.`, `她的${meaning}让大家很惊讶。`),
+          pair(`This story shows the importance of ${text}.`, `这个故事说明了${meaning}的重要性。`),
+          pair(`We learned about ${text} in simple words.`, `我们用简单的话学习了${meaning}。`)
         ]);
       }
 
       return pick([
-        [`There is a ${text} near the door.`, ""],
-        [`I saw a ${text} in the picture.`, ""],
-        [`The children found a ${text} in the garden.`, ""],
-        [`She bought a new ${text} for her room.`, ""],
-        [`He pointed to the ${text} on the table.`, ""],
-        [`The story begins with a small ${text}.`, ""]
+        pair(`The children used the ${text} during the activity.`, `孩子们在活动中用到了这个${meaning}。`),
+        pair(`I found the ${text} in a story about school life.`, `我在一个校园生活故事里看到了${meaning}。`),
+        pair(`She put the ${text} carefully on the desk.`, `她小心地把${meaning}放在书桌上。`),
+        pair(`The picture shows a small ${text} beside the road.`, `图片里路边有一个小小的${meaning}。`),
+        pair(`He asked a question about the ${text}.`, `他问了一个关于${meaning}的问题。`),
+        pair(`The lesson began with a short passage about ${text}.`, `这节课以一篇关于${meaning}的短文开始。`)
       ]);
     }
 
     function makeWords(items) {
       return items.map(([word, zh, pos = "", example = "", exampleZh = ""]) => {
         const fallback = defaultExample(word, zh, pos);
+        const exampleSource = example || exampleZh ? "provided" : specificExamples[word] ? "specific" : "fallback";
         return {
           word,
           pos,
           zh,
           example: example || fallback[0],
-          exampleZh: exampleZh || fallback[1]
+          exampleZh: exampleZh || fallback[1],
+          exampleSource
         };
+      });
+    }
+
+    const dayExampleThemes = {
+      day2: {
+        noun: [
+          text => `The ${text} in our flat needs attention today.`,
+          text => `There is a useful ${text} in the new apartment.`,
+          text => `She noticed the ${text} while cleaning the room.`,
+          text => `The family talked about the ${text} after dinner.`
+        ],
+        verb: [
+          text => `Dad will ${text} it before the visitors arrive.`,
+          text => `We need to ${text} the problem at home.`,
+          text => `Can you ${text} this before lunch?`
+        ],
+        adj: [
+          text => `The room looked ${text} after we cleaned it.`,
+          text => `It was a ${text} place to live.`,
+          text => `The flat felt ${text} on a sunny morning.`
+        ]
+      },
+      day3: {
+        noun: [
+          text => `The teacher explained the ${text} at the start of the lesson.`,
+          text => `Students need a good understanding of ${text}.`,
+          text => `The school offers extra help with ${text}.`,
+          text => `She wrote notes about ${text} in her exercise book.`
+        ],
+        verb: [
+          text => `Students must ${text} the class on time.`,
+          text => `The teacher asked us to ${text} the new topic carefully.`,
+          text => `We will ${text} the answers after the lesson.`
+        ],
+        adj: [
+          text => `A ${text} teacher can make a hard lesson easier.`,
+          text => `This is a ${text} skill for every student.`,
+          text => `The question was ${text} after the teacher explained it.`
+        ]
+      },
+      day4: {
+        noun: [
+          text => `The student wrote the ${text} at the top of the page.`,
+          text => `Good ${text} helps the teacher read your work.`,
+          text => `The teacher checked the ${text} before the exam.`,
+          text => `The class found the ${text} in the dictionary.`
+        ],
+        verb: [
+          text => `Please ${text} the word clearly.`,
+          text => `You should ${text} your work before you hand it in.`,
+          text => `The teacher helped us ${text} the problem.`
+        ],
+        adj: [
+          text => `The answer was ${text} and easy to check.`,
+          text => `She is a ${text} student in English.`,
+          text => `The exercise was ${text} but useful.`
+        ]
+      },
+      day5: {
+        noun: [
+          text => `Mum put some ${text} on the plate.`,
+          text => `The restaurant serves fresh ${text} for lunch.`,
+          text => `Would you like some ${text} with your meal?`,
+          text => `The recipe needs a little ${text}.`
+        ],
+        verb: [
+          text => `Please ${text} the vegetables before dinner.`,
+          text => `The farmer will ${text} the animals in the morning.`,
+          text => `We should ${text} this food carefully.`
+        ],
+        adj: [
+          text => `The dish was ${text} and healthy.`,
+          text => `This is a ${text} meal for children.`,
+          text => `The fruit looked ${text} on the table.`
+        ]
+      },
+      day6: {
+        noun: [
+          text => `Add the ${text} to the pan and stir it slowly.`,
+          text => `The cook checked every ${text} before making dinner.`,
+          text => `There is a clean ${text} beside the stove.`,
+          text => `The soup has a strong ${text}.`
+        ],
+        verb: [
+          text => `Please ${text} the onions into small pieces.`,
+          text => `Do not ${text} the hot food too quickly.`,
+          text => `The cook will ${text} the fish in a pan.`
+        ],
+        adj: [
+          text => `The sauce tasted ${text} but delicious.`,
+          text => `The cake was too ${text} to eat with your hands.`,
+          text => `The food looked ${text}, so we chose another dish.`
+        ]
+      },
+      day7: {
+        noun: [
+          text => `The shop assistant showed us the ${text}.`,
+          text => `This ${text} is cheaper than it was last week.`,
+          text => `She checked the ${text} before paying.`,
+          text => `The customer asked about the ${text}.`
+        ],
+        verb: [
+          text => `The store will ${text} the price tomorrow.`,
+          text => `You can ${text} it if it does not fit.`,
+          text => `Please ${text} at the customer service desk.`
+        ],
+        adj: [
+          text => `The jacket was ${text} and well made.`,
+          text => `This is a ${text} choice for school.`,
+          text => `The bag looked ${text} in the shop window.`
+        ]
+      },
+      day8: {
+        noun: [
+          text => `She chose a ${text} that matched her coat.`,
+          text => `The designer changed the ${text} before the show.`,
+          text => `There is a small ${text} on the shirt.`,
+          text => `He bought a new ${text} for the party.`
+        ],
+        verb: [
+          text => `Please ${text} your coat before you go outside.`,
+          text => `Can you ${text} this button onto my shirt?`,
+          text => `The colour will ${text} your new trousers.`
+        ],
+        adj: [
+          text => `The dress was ${text} but comfortable.`,
+          text => `Those shoes are too ${text} for walking.`,
+          text => `Her jacket looked ${text} with the blue scarf.`
+        ]
+      },
+      day9: {
+        noun: [
+          text => `Reading is his favourite ${text}.`,
+          text => `The article gave me a new ${text}.`,
+          text => `She wrote every ${text} in her notebook.`,
+          text => `The museum has a display about ${text}.`
+        ],
+        verb: [
+          text => `The story will ${text} you of your childhood.`,
+          text => `Scientists will ${text} the results carefully.`,
+          text => `I did not ${text} the ending of the book.`
+        ],
+        adj: [
+          text => `The old building is ${text} and worth visiting.`,
+          text => `This is a ${text} detail in the story.`,
+          text => `The picture looked ${text} on the page.`
+        ]
+      },
+      day10: {
+        noun: [
+          text => `The guide explained the ${text} before the tour began.`,
+          text => `They visited a museum with a beautiful ${text}.`,
+          text => `The group planned the ${text} one week in advance.`,
+          text => `The story has an interesting ${text}.`
+        ],
+        verb: [
+          text => `The children will ${text} in the park after lunch.`,
+          text => `Please ${text} the ticket before you enter.`,
+          text => `The artist tried to ${text} something new.`
+        ],
+        adj: [
+          text => `The guide was ${text} and responsible.`,
+          text => `The plan seemed ${text} at first.`,
+          text => `The gallery was ${text} during the holiday.`
+        ]
+      },
+      day11: {
+        noun: [
+          text => `Her ${text} changed after the good news.`,
+          text => `The teacher noticed his ${text} during the lesson.`,
+          text => `A little ${text} can help a nervous student.`,
+          text => `The story shows real ${text}.`
+        ],
+        verb: [
+          text => `Good friends can ${text} each other.`,
+          text => `Please ${text} your answer before you decide.`,
+          text => `He tried to ${text} his mistake with a smile.`
+        ],
+        adj: [
+          text => `She felt ${text} before the performance.`,
+          text => `He was ${text} about the result.`,
+          text => `The news made everyone ${text}.`
+        ]
+      },
+      day12: {
+        noun: [
+          text => `The teacher lost ${text} of the noisy class.`,
+          text => `She had enough ${text} to finish the race.`,
+          text => `The film had a happy ${text}.`,
+          text => `His ${text} surprised his friends.`
+        ],
+        verb: [
+          text => `Bright colours can ${text} young children.`,
+          text => `Please ${text} your feelings before you speak.`,
+          text => `The coach tried to ${text} the team.`
+        ],
+        adj: [
+          text => `The child looked ${text} after the long journey.`,
+          text => `It was a ${text} story for the whole class.`,
+          text => `She felt ${text} when the exam was over.`
+        ]
+      },
+      day13: {
+        noun: [
+          text => `The weather ${text} says it will rain tomorrow.`,
+          text => `There was a short ${text} before he answered.`,
+          text => `The ${text} here is warmer than at home.`,
+          text => `A gentle ${text} came through the window.`
+        ],
+        verb: [
+          text => `Clouds began to ${text} over the hills.`,
+          text => `Please ${text} the meeting for next Friday.`,
+          text => `The temperature may ${text} in the evening.`
+        ],
+        adj: [
+          text => `The weather was ${text} in the morning.`,
+          text => `It was a ${text} day for a walk.`,
+          text => `The air felt ${text} after the rain.`
+        ]
+      },
+      day14: {
+        noun: [
+          text => `The strong wind broke the ${text}.`,
+          text => `Snow covered the whole ${text}.`,
+          text => `The weather report showed the ${text} on the map.`,
+          text => `There was ice on the ${text} in the morning.`
+        ],
+        verb: [
+          text => `The car began to ${text} on the icy road.`,
+          text => `The storm may ${text} the small village.`,
+          text => `Workers came to ${text} after the crash.`
+        ],
+        adj: [
+          text => `The road was ${text} after the snow.`,
+          text => `It was ${text} cold at the top of the hill.`,
+          text => `The wind became ${text} in the afternoon.`
+        ]
+      },
+      day15: {
+        noun: [
+          text => `The company offered her a ${text}.`,
+          text => `The ${text} asked several questions during the interview.`,
+          text => `He wants to become a ${text} when he grows up.`,
+          text => `The office needs a careful ${text}.`
+        ],
+        verb: [
+          text => `She will ${text} for the job next week.`,
+          text => `The manager decided to ${text} two new workers.`,
+          text => `Please ${text} your name on the form.`
+        ],
+        adj: [
+          text => `The job is ${text} but interesting.`,
+          text => `He is an ${text} worker who tells the truth.`,
+          text => `The team needs a ${text} leader.`
+        ]
+      },
+      day16: {
+        noun: [
+          text => `The ${text} helped the old woman cross the road.`,
+          text => `A ${text} carried the bags to the hotel room.`,
+          text => `The town needs a new ${text}.`,
+          text => `My uncle works as a ${text}.`
+        ],
+        verb: [
+          text => `The thief tried to ${text} a small shop.`,
+          text => `She hopes to ${text} when she is sixty.`,
+          text => `He may ${text} his job next month.`
+        ],
+        adj: [
+          text => `The ${text} man was looking for work.`,
+          text => `A ${text} worker helped us for one week.`,
+          text => `The ${text} officer checked our bags.`
+        ]
+      },
+      day17: {
+        noun: [
+          text => `The ${text} walked onto the stage.`,
+          text => `Her new book became a ${text}.`,
+          text => `The audience enjoyed the ${text}.`,
+          text => `The singer gave a wonderful ${text}.`
+        ],
+        verb: [
+          text => `The children began to ${text} loudly.`,
+          text => `The school will ${text} the parents about the show.`,
+          text => `Many people ${text} the young musician.`
+        ],
+        adj: [
+          text => `The show was ${text} and full of energy.`,
+          text => `She became ${text} after winning the prize.`,
+          text => `The news was ${text} to everyone.`
+        ]
+      },
+      day18: {
+        noun: [
+          text => `The programme ended with a short ${text}.`,
+          text => `The students sat in a ${text} near the back.`,
+          text => `The club held a ${text} after school.`,
+          text => `The story reached a clear ${text}.`
+        ],
+        verb: [
+          text => `The ticket will ${text} one child.`,
+          text => `The museum will ${text} the paintings this week.`,
+          text => `The teacher asked us to ${text} our ideas.`
+        ],
+        adj: [
+          text => `Each ${text} student received a certificate.`,
+          text => `The room became ${text} before the meeting.`,
+          text => `It was a ${text} event for the whole school.`
+        ]
+      },
+      day21: {
+        noun: [
+          text => `The children saw a ${text} in the forest.`,
+          text => `The ${text} is important to life on Earth.`,
+          text => `Farmers depend on good ${text}.`,
+          text => `The picture shows a beautiful ${text}.`
+        ],
+        verb: [
+          text => `People should not ${text} wild animals.`,
+          text => `Factories can ${text} the environment.`,
+          text => `The number of birds may ${text} each year.`
+        ],
+        adj: [
+          text => `The lake looked ${text} in the morning sun.`,
+          text => `This is a ${text} part of the rainforest.`,
+          text => `The animal is ${text} and hard to find.`
+        ]
+      },
+      day22: {
+        noun: [
+          text => `The map shows the ${text} clearly.`,
+          text => `We saw a ${text} near the farm.`,
+          text => `The children watched the ${text} from the boat.`,
+          text => `The island has a peaceful ${text}.`
+        ],
+        verb: [
+          text => `The team tried to ${text} the strong opponent.`,
+          text => `Heavy rain may ${text} the old bridge.`,
+          text => `The school will ${text} the result tomorrow.`
+        ],
+        adj: [
+          text => `The village was ${text} and quiet.`,
+          text => `The coast looked ${text} in the sunshine.`,
+          text => `The story was ${text} but true.`
+        ]
+      },
+      day23: {
+        noun: [
+          text => `The doctor checked his ${text} carefully.`,
+          text => `She went to the clinic because of a bad ${text}.`,
+          text => `A healthy diet can prevent many kinds of ${text}.`,
+          text => `The nurse put a ${text} on his arm.`
+        ],
+        verb: [
+          text => `He may ${text} his knee during the match.`,
+          text => `It will take weeks to ${text} fully.`,
+          text => `Patients can ${text} if they rest well.`
+        ],
+        adj: [
+          text => `She felt ${text} after the long illness.`,
+          text => `The shoes were ${text} and hurt my feet.`,
+          text => `The exercise was ${text} at first.`
+        ]
+      },
+      day24: {
+        noun: [
+          text => `The coach watched the ${text} during training.`,
+          text => `The team won the ${text} after a hard match.`,
+          text => `He left his bag in the ${text}.`,
+          text => `The runner was out of ${text} at the finish.`
+        ],
+        verb: [
+          text => `We will ${text} in the school competition.`,
+          text => `The player tried to ${text} the ball hard.`,
+          text => `She needs to ${text} for the race every day.`
+        ],
+        adj: [
+          text => `The sport was ${text} but exciting.`,
+          text => `A ${text} teacher helped the beginners.`,
+          text => `The race became ${text} near the end.`
+        ]
+      },
+      day25: {
+        noun: [
+          text => `The city has a serious problem with ${text}.`,
+          text => `The report explains the cause of ${text}.`,
+          text => `We need a better ${text} for the environment.`,
+          text => `The new rule will reduce ${text}.`
+        ],
+        verb: [
+          text => `We should ${text} paper and bottles whenever possible.`,
+          text => `People must not ${text} rubbish in the street.`,
+          text => `The number may ${text} if we do nothing.`
+        ],
+        adj: [
+          text => `This is a ${text} way to save energy.`,
+          text => `The change was ${text} and easy to see.`,
+          text => `The new bin is for ${text} bottles.`
+        ]
+      },
+      day26: {
+        noun: [
+          text => `The volunteers received a small ${text} for their work.`,
+          text => `The group planned the ${text} carefully.`,
+          text => `The mountain path has a little ${text} near the top.`,
+          text => `The project brought real ${text} to the village.`
+        ],
+        verb: [
+          text => `The school will ${text} a clean-up day.`,
+          text => `We need to ${text} the plan before Friday.`,
+          text => `They decided to ${text} the litter from the park.`
+        ],
+        adj: [
+          text => `It was a ${text} idea to take more water.`,
+          text => `The rules are ${text} but fair.`,
+          text => `The result was ${text} and made everyone smile.`
+        ]
+      },
+      day27: {
+        noun: [
+          text => `The computer stores the ${text} safely.`,
+          text => `Good ${text} makes teamwork easier.`,
+          text => `The website has a simple ${text}.`,
+          text => `She sent the ${text} to her friend.`
+        ],
+        verb: [
+          text => `Please ${text} the file before class starts.`,
+          text => `You can ${text} the printer to the computer.`,
+          text => `He tried to ${text} her number twice.`
+        ],
+        adj: [
+          text => `The phone is ${text} and easy to use.`,
+          text => `This is an ${text} way to communicate.`,
+          text => `The machine became ${text} after the update.`
+        ]
+      },
+      day28: {
+        noun: [
+          text => `The friends had a long ${text} after school.`,
+          text => `Trust is important in any ${text}.`,
+          text => `The teacher gave a clear ${text}.`,
+          text => `The parcel arrived by ${text}.`
+        ],
+        verb: [
+          text => `Please ${text} the advice before you answer.`,
+          text => `Good friends should ${text} each other.`,
+          text => `She tried to ${text} him to join the club.`
+        ],
+        adj: [
+          text => `The message was ${text} and hard to understand.`,
+          text => `The room looked ${text} after the party.`,
+          text => `It is ${text} that he will forget your birthday.`
+        ]
+      }
+    };
+
+    function likelyVerb(word, zh, pos) {
+      const lowerPos = String(pos || "").toLowerCase();
+      if (/(tion|sion|ment|ness|ity|ship|ance|ence|er|or|ist|ism)$/.test(String(word || ""))) return false;
+      return lowerPos.includes("v") || /^(提出|养育|修理|好转|仰望|查阅|收拾|整理|继续|参加|解决|提交|搜索|包含|替代|发音|登记|复习|喂|烤|搅拌|洒出|抱怨|买得起|交换|减少|穿|选择|提高|搭配|缝制|系牢|提醒|期待|发展|复印|坚持|发生|创造|鼓励|覆盖|考虑|比较|控制|吸引|介绍|出现|安排|尝试|批准|吹|上升|宣布|协助|接近|申请|雇用|抢劫|退休|通知|表演|鼓掌|承认|展示|邀请|破坏|打猎|杀死|宣布|攻击|成功|击败|受伤|恢复|遭受|锻炼|击打|竞争|训练|爆炸|重视|回收|扔掉|照顾|打算|执行|支持|移开|组织|供应|获得|发明|交流|连接|拨号|安装|聊天|上传|接受|陪伴|依靠|信任|报名|说服|建议|放松|推荐|忽视|打断)/.test(String(zh || ""));
+    }
+
+    function likelyAdjective(word, zh, pos) {
+      const lowerPos = String(pos || "").toLowerCase();
+      return lowerPos.includes("adj") || /的$/.test(firstMeaning(zh));
+    }
+
+    function likelyAdverb(word, pos) {
+      const text = String(word || "");
+      if (["apply", "reply", "supply", "multiply", "likely", "lively", "friendly", "costly", "elderly"].includes(text)) return false;
+      return String(pos || "").toLowerCase().includes("adv") || /ly$/.test(text);
+    }
+
+    const exactDictionaryExamples = {
+      qualified: ["She is qualified to teach English.", ""],
+      expert: ["An expert will answer your questions.", ""],
+      familiar: ["This place looks familiar to me.", ""],
+      nearby: ["There is a supermarket nearby.", ""],
+      ahead: ["The road ahead was covered with snow.", ""],
+      choose: ["You can choose any colour you like.", ""],
+      employer: ["Her employer gave her two days off.", ""],
+      candidate: ["Each candidate had a short interview.", ""],
+      employ: ["The company will employ two new workers.", ""],
+      apply: ["She decided to apply for the job.", ""],
+      application: ["Please send your application before Friday.", ""],
+      contract: ["Read the contract carefully before you sign it.", ""],
+      gym: ["She goes to the gym twice a week.", ""],
+      fitness: ["Swimming is good for your fitness.", ""],
+      hurt: ["He hurt his arm during the game.", ""],
+      ankle: ["She twisted her ankle on the stairs.", ""],
+      knee: ["He fell and hurt his knee.", ""],
+      injure: ["He may injure his knee during the match.", ""],
+      argument: ["They had an argument about the plan.", ""],
+      robot: ["The robot helped us finish the task faster.", ""],
+      "give up": ["Don't give up when the work gets difficult.", ""],
+      explanation: ["The teacher gave a clear explanation.", ""],
+      pleasure: ["It was a pleasure to meet her.", ""],
+      relationship: ["Trust is important in any relationship.", ""],
+      style: ["She likes the style of this jacket.", ""],
+      mall: ["We met at the mall after school.", ""],
+      design: ["The design of the poster is simple and bright.", ""],
+      accept: ["Please accept my invitation.", ""],
+      primary: ["The primary reason for the trip was to visit family.", ""],
+      elementary: ["The book explains elementary English grammar.", ""],
+      ability: ["She has the ability to learn languages quickly.", ""],
+      alphabet: ["Children learn the alphabet before they start reading.", ""],
+      consonant: ["The letter b is a consonant.", ""],
+      vowel: ["The letter a is a vowel.", ""],
+      word: ["Do not write more than 200 words.", ""],
+      handwriting: ["Her handwriting is clear and easy to read.", ""],
+      "self-service": ["The cafe has a self-service counter.", ""],
+      diet: ["A balanced diet is important for good health.", ""],
+      grill: ["We cooked the fish under the grill.", ""],
+      tasty: ["The soup was tasty and warm.", ""],
+      chip: ["He ate a bag of chips after school.", ""],
+      sticky: ["My fingers were sticky from the honey.", ""],
+      disgusting: ["The old food smelled disgusting.", ""],
+      flavour: ["This ice cream has a strong strawberry flavour.", ""],
+      pot: ["Put the potatoes into a large pot.", ""],
+      pan: ["Heat the oil in a frying pan.", ""],
+      advert: ["I saw an advert for a new phone.", ""],
+      advertise: ["The company will advertise its new product online.", ""],
+      goods: ["The store sells leather goods.", ""],
+      "on sale": ["These shoes are on sale this week.", ""],
+      opposite: ["The bank is opposite the supermarket.", ""],
+      supermarket: ["She bought milk at the supermarket.", ""],
+      "brand new": ["He bought a brand new bike.", ""],
+      luxury: ["They stayed in a luxury hotel.", ""],
+      paper: ["Please write your name on this piece of paper.", ""],
+      hide: ["The children tried to hide behind the door.", ""],
+      while: ["I listened to music while I did my homework.", ""],
+      habit: ["Reading before bed is a good habit.", ""],
+      development: ["The development of the city was very fast.", ""],
+      generally: ["She generally walks to school.", ""],
+      round: ["The table is round.", ""],
+      thick: ["The book is very thick.", ""],
+      graphic: ["The magazine uses bright graphic designs.", ""],
+      hike: ["We went for a hike in the hills.", ""],
+      cruise: ["They went on a cruise around the islands.", ""],
+      particularly: ["I particularly liked the last song.", ""],
+      uninterested: ["He seemed uninterested in the game.", ""],
+      imagine: ["Imagine a world without computers.", ""],
+      insist: ["She insisted on paying for dinner.", ""],
+      "take place": ["The concert will take place on Friday.", ""],
+      beautiful: ["The garden looks beautiful in spring.", ""],
+      generous: ["It was generous of him to share his lunch.", ""],
+      fond: ["She is fond of classical music.", ""],
+      ordinary: ["It was just an ordinary school day.", ""],
+      nervous: ["He felt nervous before the exam.", ""],
+      anxious: ["Parents are anxious about their children's safety.", ""],
+      disappointing: ["The result was disappointing.", ""],
+      embarrassed: ["She felt embarrassed about her mistake.", ""],
+      smart: ["You look smart in that jacket.", ""],
+      common: ["Colds are common in winter.", ""],
+      elder: ["My elder brother studies at university.", ""],
+      cute: ["The puppy looks cute.", ""],
+      annoyed: ["He was annoyed by the noise.", ""],
+      rude: ["It is rude to interrupt people.", ""],
+      cruel: ["It is cruel to hurt animals.", ""],
+      "used to": ["I used to walk to school every day.", ""],
+      "at present": ["At present, we are studying English.", ""],
+      humid: ["The air was hot and humid.", ""],
+      climate: ["The climate here is warm and dry.", ""],
+      forecast: ["The weather forecast says it will rain.", ""],
+      drop: ["Temperatures may drop tonight.", ""],
+      windy: ["It was too windy to fly a kite.", ""],
+      broad: ["The river is broad at this point.", ""],
+      blow: ["The wind began to blow strongly.", ""],
+      gale: ["A gale blew down several trees.", ""],
+      rise: ["Smoke began to rise from the fire.", ""],
+      height: ["What is the height of the tower?", ""],
+      yard: ["The children played in the yard.", ""],
+      bury: ["The dog tried to bury the bone.", ""],
+      crew: ["The ship's crew worked all night.", ""],
+      profession: ["Teaching is a respected profession.", ""],
+      "middle-aged": ["A middle-aged woman opened the door.", ""],
+      policeman: ["The policeman helped us cross the road.", ""],
+      prison: ["The thief was sent to prison.", ""],
+      salesman: ["The salesman showed us a new car.", ""],
+      saleswoman: ["The saleswoman helped me choose a coat.", ""],
+      unemployed: ["He was unemployed for six months.", ""],
+      diver: ["The diver swam down to the shipwreck.", ""],
+      celebrity: ["The celebrity waved to the crowd.", ""],
+      industry: ["Tourism is an important industry here.", ""],
+      hero: ["He became a hero after saving the child.", ""],
+      bestseller: ["Her first novel became a bestseller.", ""],
+      "hit song": ["The band played their hit song.", ""],
+      admire: ["I admire her courage.", ""],
+      entertain: ["A clown came to entertain the children.", ""],
+      permit: ["You need a permit to park here.", ""],
+      permanent: ["They found a permanent home.", ""],
+      firework: ["A firework lit up the night sky.", ""],
+      silly: ["That was a silly mistake.", ""],
+      issue: ["The teacher discussed an important issue.", ""],
+      universe: ["Scientists study the universe.", ""],
+      planet: ["Mars is a planet.", ""],
+      live: ["Many animals live in the rainforest.", ""],
+      rainforest: ["The rainforest is home to many animals.", ""],
+      land: ["The plane will land soon.", ""],
+      stone: ["He picked up a smooth stone.", ""],
+      stream: ["A small stream ran through the valley.", ""],
+      "at first": ["At first, I did not understand the question.", ""],
+      "southeast Asia": ["Thailand is in Southeast Asia.", ""],
+      attractive: ["The old town is very attractive.", ""],
+      "navy blue": ["She wore a navy blue coat.", ""],
+      wave: ["A big wave hit the boat.", ""],
+      directly: ["Please answer the question directly.", ""],
+      bandage: ["The nurse put a bandage on his arm.", ""],
+      bone: ["He broke a bone in his foot.", ""],
+      "extreme sports": ["Extreme sports can be dangerous.", ""],
+      "motor-racing": ["Motor-racing is a fast and exciting sport.", ""],
+      "water skiing": ["We tried water skiing at the lake.", ""],
+      pitch: ["The players ran onto the football pitch.", ""],
+      emergency: ["Call this number in an emergency.", ""],
+      boxing: ["Boxing requires strength and speed.", ""],
+      championship: ["She won the national championship.", ""],
+      explode: ["The balloon may explode if you blow it up too much.", ""],
+      sharp: ["Be careful with that sharp knife.", ""],
+      amount: ["A large amount of water was wasted.", ""],
+      pollution: ["Air pollution is a serious problem.", ""],
+      atmosphere: ["The atmosphere in the classroom was friendly.", ""],
+      intend: ["I intend to finish the project today.", ""],
+      require: ["This job will require a lot of patience.", ""],
+      "carry out": ["Scientists will carry out the experiment tomorrow.", ""],
+      instead: ["Let's walk instead of taking the bus.", ""],
+      litter: ["Please do not drop litter in the park.", ""],
+      "on purpose": ["He did not break the cup on purpose.", ""],
+      "go off": ["The alarm will go off at six o'clock.", ""],
+      invention: ["The telephone was an important invention.", ""],
+      communication: ["Good communication is important in a team.", ""],
+      connection: ["The internet connection is slow today.", ""],
+      fax: ["Please send the document by fax.", ""],
+      invent: ["Who invented the telephone?", ""],
+      "ring up": ["I'll ring up the doctor in the morning.", ""],
+      operator: ["The operator connected the call.", ""],
+      disagree: ["I disagree with his opinion.", ""],
+      reality: ["The dream soon became a reality.", ""]
+    };
+
+    function containsAny(text, items) {
+      return items.some(item => text.includes(item));
+    }
+
+    function semanticExample(word) {
+      const text = String(word.word || "").trim();
+      const zh = String(word.zh || "");
+      if (exactDictionaryExamples[text]) return exactDictionaryExamples[text];
+
+      if (containsAny(zh, ["脚踝", "膝盖", "骨", "喉咙", "面颊", "脸颊", "手指", "脚", "头", "肩"])) {
+        return [`She hurt her ${text} during the game.`, ""];
+      }
+
+      if (containsAny(zh, ["诊所", "健身房", "售票处", "接待处", "宫殿", "大使馆", "海边", "街区", "阳台", "商场", "公寓", "教室", "画廊", "博物馆", "停车位", "山洞", "海岸", "海湾"])) {
+        return [`We visited the ${text} in the afternoon.`, ""];
+      }
+
+      if (containsAny(zh, ["专家", "候选人", "雇主", "员工", "老师", "医生", "护士", "运动员", "观众", "演员", "导演", "律师", "会计", "侦探", "警察", "消防", "科学家", "教授", "兽医", "主人", "士兵", "教练", "游客", "行人", "司机", "背包客", "朋友", "孩子", "新娘", "英雄", "名人"])) {
+        return [`The ${text} spoke to us after the meeting.`, ""];
+      }
+
+      if (containsAny(zh, ["食品", "食物", "蔬菜", "肉", "鱼", "水果", "饮料", "茶", "水壶", "锅", "盘", "原料", "味道", "香料"])) {
+        return [`She added some ${text} to the meal.`, ""];
+      }
+
+      if (containsAny(zh, ["衣", "鞋", "领带", "袖", "裤", "棉", "丝", "图案", "标签", "凉鞋", "运动服", "头盔"])) {
+        return [`She wore a ${text} to the party.`, ""];
+      }
+
+      if (containsAny(zh, ["电话", "电脑", "网站", "数据", "软件", "硬件", "服务器", "视频", "机器", "计算器", "网络", "传真", "主页", "摄像头", "社交媒体"])) {
+        return [`The new ${text} made communication easier.`, ""];
+      }
+
+      if (containsAny(zh, ["动物", "斑马", "长颈鹿", "袋鼠", "企鹅", "蚊子", "鸟", "牛", "山羊", "驴", "猪", "蚂蚁", "鹦鹉", "青蛙", "生物"])) {
+        return [`We saw a ${text} at the wildlife park.`, ""];
+      }
+
+      if (containsAny(zh, ["天气", "气候", "风", "雨", "雪", "温度", "阳光", "微风", "海洋", "大陆", "森林", "山谷", "瀑布", "悬崖", "沙子", "海岸", "景色", "农田", "环境", "自然", "宇宙", "行星"])) {
+        return [`The ${text} looked beautiful in the morning light.`, ""];
+      }
+
+      if (containsAny(zh, ["比赛", "运动", "训练", "冠军", "赛道", "游泳", "拳击", "跳高", "得分", "联赛", "锦标赛"])) {
+        return [`The coach explained the ${text} before practice.`, ""];
+      }
+
+      if (containsAny(zh, ["车", "飞机", "船", "火车", "地铁", "路线", "登机", "签证", "行李", "目的地", "旅行", "交通", "人行道", "十字路口", "路标"])) {
+        return [`The ${text} made the journey easier.`, ""];
+      }
+
+      if (containsAny(zh, ["教育", "健康", "健身", "申请", "解释", "关系", "信任", "争论", "现实", "快乐", "婚姻", "童年", "知识", "语法", "词汇", "课程", "文学", "研究", "费用", "选择", "能力", "信息", "发音", "污染", "气候变化", "组织", "方法", "努力", "困难", "优势", "缺点", "交流", "连接"])) {
+        return [`Good ${text} can make a big difference.`, ""];
+      }
+
+      return null;
+    }
+
+    function themedExample(day, word) {
+      const text = String(word.word || "").trim();
+      const theme = dayExampleThemes[day];
+      if (!text || !theme) return defaultExample(word.word, word.zh, word.pos);
+      const pick = (items) => items[hashText(day + text) % items.length];
+      const semantic = semanticExample(word);
+      if (semantic) return semantic;
+
+      if (text.includes(" ")) {
+        if (/^by /.test(text)) return [`We travelled ${text} because it was the easiest way.`, ""];
+        if (/^on /.test(text)) return [`They were ${text} when the phone rang.`, ""];
+        if (/^in /.test(text)) return [`She was ${text} when she heard the good news.`, ""];
+        if (/^at /.test(text)) return [`The children waited ${text} before the show began.`, ""];
+        if (/^(get|take|keep|carry|look|set|check|sign|give|hand|bring|tidy|turn|break|run|throw|go|put|base|apply|pay|hang|fill|work) /.test(text)) {
+          return [`Please ${text} before the lesson starts.`, ""];
+        }
+        return [pick(theme.noun)(text), ""];
+      }
+
+      if (likelyAdverb(text, word.pos)) {
+        return [`She answered ${text} when the teacher called her name.`, ""];
+      }
+
+      if (likelyVerb(text, word.zh, word.pos)) {
+        return [pick(theme.verb)(text), ""];
+      }
+
+      if (likelyAdjective(text, word.zh, word.pos)) {
+        return [pick(theme.adj)(text), ""];
+      }
+
+      return [pick(theme.noun)(text), ""];
+    }
+
+    function applyThemedExamples() {
+      Object.entries(wordSets).forEach(([day, set]) => {
+        if (day === "day1") return;
+        set.words.forEach(word => {
+          if (word.exampleSource === "provided" || (day === "day2" && word.exampleSource === "specific")) return;
+          if (!word.exampleSource && String(word.exampleZh || "").trim()) return;
+          [word.example, word.exampleZh] = themedExample(day, word);
+          if (!String(word.exampleZh || "").trim()) {
+            word.exampleZh = defaultExample(word.word, word.zh, word.pos)[1];
+          }
+          word.exampleSource = "themed";
+        });
       });
     }
 
@@ -1133,11 +1962,117 @@
       }
     });
 
+    const overrideExampleZh = {
+      "In Sweden it is against the law to hit a child.": "在瑞典，打孩子是违法的。",
+      "The two children attend the same school.": "这两个孩子在同一所学校上学。",
+      "They asked what his plans were after graduation.": "他们问他毕业后有什么打算。",
+      "She's going in for the Cambridge First Certificate.": "她打算参加剑桥初级证书考试。",
+      "We are faced with a difficult choice.": "我们面临一个艰难的选择。",
+      "Money is not essential to happiness.": "金钱并不是幸福必不可少的东西。",
+      "Reading will increase your vocabulary.": "阅读会增加你的词汇量。",
+      "Very few people can pronounce my name correctly.": "很少有人能正确读出我的名字。",
+      "She is a very talented dancer and won many prizes.": "她是一位很有天赋的舞者，赢得了许多奖项。",
+      "You must stop writing and hand in your papers when the exam time is up.": "考试时间一到，你必须停止书写并交卷。",
+      "Some children are feeding bread to the lovely cat.": "一些孩子正在拿面包喂那只可爱的小猫。",
+      "Tuna can also be grilled.": "金枪鱼也可以烤着吃。",
+      "You can't replace the water with drinks.": "你不能用饮料代替水。",
+      "Mix all these ingredients together.": "把所有这些原料混合在一起。",
+      "The parking beneath the building is very large.": "楼下的停车场很大。",
+      "This programme is not suitable for children.": "这个节目不适合儿童。",
+      "This item can't be washed in a washing machine.": "这件物品不能用洗衣机洗。",
+      "The car is a bargain at that price.": "这辆车以那个价格买很划算。",
+      "She raised her eyes from her work.": "她从工作中抬起眼睛。",
+      "This blue sweater is a good match for your skin.": "这件蓝色毛衣很衬你的肤色。",
+      "Jeans are very fashionable among the young.": "牛仔裤在年轻人中很流行。",
+      "Parents expect all their children to be successful in the future.": "父母都期望孩子们将来成功。",
+      "My friend is very keen to help others.": "我的朋友很热心帮助别人。",
+      "My brother loves science fiction in particular.": "我哥哥尤其喜欢科幻小说。",
+      "Go on with your work.": "继续做你的工作。",
+      "He did reply, though not immediately.": "他确实回复了，不过不是马上回复。",
+      "He was only partly responsible for the accident.": "他只对这次事故负部分责任。",
+      "Opening hours are from 9 am to 6 pm each day.": "营业时间是每天上午九点到下午六点。",
+      "We tied the rope around our waists.": "我们把绳子系在腰间。",
+      "The teacher said my story lacked imagination.": "老师说我的故事缺乏想象力。",
+      "The homework should be completed within one hour.": "作业应该在一小时内完成。",
+      "This sport demands both speed and strength.": "这项运动既需要速度也需要力量。",
+      "She was delighted at the news of the holiday.": "听到放假的消息，她很高兴。",
+      "My parents have always encouraged me to make my own decision.": "父母一直鼓励我自己做决定。",
+      "He laughed to cover his sadness.": "他用笑声掩饰自己的悲伤。",
+      "She had a very relaxed manner.": "她的举止非常放松。",
+      "We were amazed at his knowledge of insects.": "我们对他的昆虫知识感到惊讶。",
+      "The theme park has attracted many visitors.": "这个主题公园吸引了许多游客。",
+      "My friend gave me a challenging look.": "我的朋友用一种挑衅的眼神看着我。",
+      "She glanced at her watch.": "她瞥了一眼手表。",
+      "They pinned a notice to the door.": "他们把一张通知钉在门上。",
+      "A bus appeared round the corner.": "一辆公共汽车从拐角处出现了。",
+      "You can ask for help whenever you need it.": "无论什么时候需要，你都可以寻求帮助。",
+      "He crashed his car into a wall.": "他开车撞上了一堵墙。",
+      "Despite the bad weather he had a good time.": "尽管天气不好，他仍然玩得很开心。",
+      "Do whatever you like.": "做你喜欢做的任何事。",
+      "The area has been declared a nature reserve.": "这个地区已被宣布为自然保护区。",
+      "The bird flapped its wings noisily.": "那只鸟扑扇着翅膀，发出很大声音。",
+      "He found a barber to have his hair cut short.": "他找了个理发师把头发剪短。",
+      "You have to do piles of work when you come back.": "你回来后必须做一大堆工作。",
+      "The woman was robbed of her handbag in the street.": "那位女士在街上被抢走了手提包。",
+      "She was chosen as the heroine of the new movie.": "她被选为这部新电影的女主角。",
+      "We should learn to become more independent.": "我们应该学会变得更加独立。",
+      "Each ticket admits one child only.": "每张票只允许一名儿童入场。",
+      "He invited each individual student in our class.": "他邀请了我们班的每一位学生。",
+      "We sat in a row at the back of the classroom.": "我们在教室后面坐成一排。",
+      "We should improve our social skills gradually.": "我们应该逐渐提高社交技能。",
+      "They had to wait till next week to go to the movies.": "他们不得不等到下周才去看电影。",
+      "The novel is based on a true experience.": "这部小说以一次真实经历为基础。",
+      "The conclusion of the novel was a little disappointing.": "这部小说的结尾有点令人失望。",
+      "The new phone is out of order again.": "这部新电话又出故障了。",
+      "The weather is marvellous.": "天气好极了。",
+      "We should learn to get along well with neighbours.": "我们应该学会与邻居友好相处。",
+      "Every creature on the earth should be treated as an equal member of nature.": "地球上的每一种生物都应被视为自然界平等的一员。",
+      "They will announce the result of the vote tonight.": "他们今晚将宣布投票结果。",
+      "Someone is beating a drum.": "有人正在敲鼓。",
+      "The cattle are fed on grass.": "这些牛以草为食。",
+      "She couldn't see or hear anything at all.": "她根本看不见也听不见任何东西。",
+      "She is still weak after her illness.": "她病后仍然虚弱。",
+      "She does a 20-minute workout every day.": "她每天做二十分钟的锻炼。",
+      "He suffered terribly the last few days.": "过去几天他受了很大的苦。",
+      "We should take exercise every day.": "我们应该每天锻炼。",
+      "Smoking seriously damages people's health.": "吸烟严重损害人们的健康。",
+      "The first prize was awarded to the youngest competitor.": "一等奖颁给了最年轻的参赛选手。",
+      "We can't compete with them on price.": "我们在价格上无法与他们竞争。",
+      "He is training us to be teachers.": "他正在培训我们成为教师。",
+      "He is hardly likely to admit he was wrong.": "他几乎不可能承认自己错了。",
+      "Climate change is still a subject for debate.": "气候变化仍然是一个有争议的话题。",
+      "The creation of an efficient transport system is critical.": "建立高效的交通系统至关重要。",
+      "The three men remained silent.": "那三个人保持沉默。",
+      "Carry on with your work while I'm away.": "我不在的时候，继续做你的工作。",
+      "He took a step towards the door.": "他朝门口迈了一步。",
+      "The activity will benefit every student.": "这项活动将使每个学生受益。",
+      "These measures are strongly supported by environmental groups.": "这些措施得到了环保组织的大力支持。",
+      "He removed his hand from her shoulder.": "他把手从她肩上移开。",
+      "The former option would be much more sensible.": "前一个选择会明智得多。",
+      "They are always very strict with their children.": "他们对孩子总是很严格。",
+      "Fruit can supply us with the daily vitamin we need.": "水果可以为我们提供每天所需的维生素。",
+      "I was able to gain invaluable experience over that year.": "那一年我获得了宝贵的经验。",
+      "We can talk face to face using a smartphone.": "我们可以用智能手机面对面交谈。",
+      "He lifted the phone and dialed her number.": "他拿起电话拨了她的号码。",
+      "She fell in with my idea at once.": "她立刻同意了我的想法。",
+      "The shower is easy to install.": "这个淋浴器很容易安装。",
+      "Social media has become a platform for advertisements.": "社交媒体已经成为广告平台。",
+      "There are disadvantages to the plan.": "这个计划有一些缺点。",
+      "Please pay for goods on delivery.": "请在货物送达时付款。",
+      "Taking regular exercise benefits your health.": "定期锻炼有益健康。",
+      "We do keep in contact with each other.": "我们的确彼此保持联系。",
+      "More detailed information is available on request.": "如有要求，可提供更详细的信息。"
+    };
+
+    applyThemedExamples();
+
     Object.entries(exampleOverrides).forEach(([day, examples]) => {
       wordSets[day].words.forEach(word => {
         const example = examples[word.word];
         if (example) {
-          [word.example, word.exampleZh] = example;
+          word.example = example[0];
+          word.exampleZh = example[1] || overrideExampleZh[example[0]] || word.exampleZh;
+          word.exampleSource = "book";
         }
       });
     });
