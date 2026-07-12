@@ -619,7 +619,6 @@
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
     function firstMeaning(zh) {
       return String(zh || "").split(/[；;,，]/)[0].trim();
@@ -2082,13 +2081,30 @@
 
     const CLOUD_CONFIG = {
       url: "https://nirtrtbxdehwxlthfecn.supabase.co",
-      key: "sb_publishable_FjMOG5R1OYKY0917F6yASg_M3aP-Rny"
+      key: "sb_publishable_FjMOG5R1OYKY0917F6yASg_M3aP-Rny",
+      moduleUrl: "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
     };
-    const CLOUD_CLIENT = window.supabase?.createClient
-      ? window.supabase.createClient(CLOUD_CONFIG.url, CLOUD_CONFIG.key)
-      : null;
+    let cloudClient = null;
+    const cloudClientPromise = import(CLOUD_CONFIG.moduleUrl)
+      .then(module => {
+        const createClient = module.createClient || module.default?.createClient;
+        if (!createClient) throw new Error("Supabase createClient is unavailable");
+        cloudClient = createClient(CLOUD_CONFIG.url, CLOUD_CONFIG.key);
+        return cloudClient;
+      })
+      .catch(error => {
+        console.warn("Supabase module failed to load", error);
+        return null;
+      });
     let cloudSaveTimer = null;
     let cloudLoading = false;
+
+    async function getCloudClient() {
+      if (cloudClient) return cloudClient;
+      const client = await cloudClientPromise;
+      if (!client) throw new Error("云端登录组件加载失败，请刷新页面或稍后再试。");
+      return client;
+    }
 
     function isCloudLoginId(value) {
       return String(value || "").includes("@");
@@ -2296,7 +2312,7 @@
     }
 
     function scheduleCloudSave() {
-      if (!CLOUD_CLIENT || !state.cloudUser || cloudLoading) return;
+      if (!state.cloudUser || cloudLoading) return;
       clearTimeout(cloudSaveTimer);
       cloudSaveTimer = setTimeout(() => {
         saveCloudProgress().catch(error => {
@@ -2306,7 +2322,8 @@
     }
 
     async function saveCloudProgress(snapshot = progressSnapshot(), options = {}) {
-      if (!CLOUD_CLIENT || !state.cloudUser || (cloudLoading && !options.force)) return;
+      if (!state.cloudUser || (cloudLoading && !options.force)) return;
+      const client = await getCloudClient();
       const payload = {
         user_id: state.cloudUser.id,
         day: dayNumber(state.day),
@@ -2319,7 +2336,7 @@
         current_index: Number(snapshot.queueIndex) || 0,
         wrong_index: Number(snapshot.wrongIndex) || 0
       };
-      const { error } = await CLOUD_CLIENT
+      const { error } = await client
         .from("word_progress")
         .upsert(payload, { onConflict: "user_id,day" });
       if (error) throw error;
@@ -2327,11 +2344,12 @@
     }
 
     async function loadCloudProfile(options = {}) {
-      if (!CLOUD_CLIENT || !state.cloudUser) return;
+      if (!state.cloudUser) return;
       cloudLoading = true;
       try {
+        const client = await getCloudClient();
         setLoginStatus("正在同步云端记录...");
-        const { data, error } = await CLOUD_CLIENT
+        const { data, error } = await client
           .from("word_progress")
           .select("attempts,wrong_book,mastered_book,selected_words,score,streak,current_index,wrong_index")
           .eq("user_id", state.cloudUser.id)
@@ -2369,21 +2387,17 @@
         alert("请输入邮箱和密码。第一次使用时会自动注册云端账号。");
         return;
       }
-      if (!CLOUD_CLIENT) {
-        alert("云端登录组件没有加载成功，请刷新页面后再试。");
-        return;
-      }
-
       const fallbackSnapshot = progressSnapshot();
       setLoginStatus("正在登录云端...");
       try {
-        let result = await CLOUD_CLIENT.auth.signInWithPassword({
+        const client = await getCloudClient();
+        let result = await client.auth.signInWithPassword({
           email: cleanEmail,
           password: text
         });
 
         if (result.error && /invalid login credentials/i.test(result.error.message || "")) {
-          result = await CLOUD_CLIENT.auth.signUp({
+          result = await client.auth.signUp({
             email: cleanEmail,
             password: text,
             options: { emailRedirectTo: window.location.origin + window.location.pathname }
@@ -2426,13 +2440,10 @@
     }
 
     async function restoreCloudSession() {
-      if (!CLOUD_CLIENT) {
-        updateLoginStatus();
-        return;
-      }
       let sessionResult;
       try {
-        sessionResult = await CLOUD_CLIENT.auth.getSession();
+        const client = await getCloudClient();
+        sessionResult = await client.auth.getSession();
       } catch (error) {
         updateLoginStatus();
         return;
