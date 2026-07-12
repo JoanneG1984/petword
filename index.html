@@ -590,10 +590,10 @@
             <select id="daySelect" aria-label="选择单词 Day"></select>
           </div>
           <div class="user-panel">
-            <span>User ID</span>
-            <input id="userIdInput" type="text" autocomplete="off" placeholder="例如 Amy 或 001">
+            <span>邮箱/User ID</span>
+            <input id="userIdInput" type="text" autocomplete="off" placeholder="邮箱可云端同步，或 Amy 本地">
             <input id="passwordInput" type="password" autocomplete="current-password" placeholder="密码">
-            <button class="btn secondary" id="switchUser">登录</button>
+            <button class="btn secondary" id="switchUser">登录/注册</button>
           </div>
           <div class="login-status" id="loginStatus"></div>
         </div>
@@ -619,6 +619,7 @@
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     function firstMeaning(zh) {
       return String(zh || "").split(/[；;,，]/)[0].trim();
@@ -2079,6 +2080,25 @@
 
     let words = wordSets.day1.words;
 
+    const CLOUD_CONFIG = {
+      url: "https://nirtrtbxdehwxlthfecn.supabase.co",
+      key: "sb_publishable_FjMOG5R1OYKY0917F6yASg_M3aP-Rny"
+    };
+    const CLOUD_CLIENT = window.supabase?.createClient
+      ? window.supabase.createClient(CLOUD_CONFIG.url, CLOUD_CONFIG.key)
+      : null;
+    let cloudSaveTimer = null;
+    let cloudLoading = false;
+
+    function isCloudLoginId(value) {
+      return String(value || "").includes("@");
+    }
+
+    function dayNumber(day) {
+      const value = Number(String(day || "").replace(/\D/g, ""));
+      return Number.isFinite(value) && value > 0 ? value : 1;
+    }
+
     function cleanUserId(value) {
       const text = String(value || "").trim();
       return text || "default";
@@ -2193,6 +2213,7 @@
       view: "cards",
       filter: "all",
       current: null,
+      cloudUser: null,
       locked: false,
       streak: loadNumber(activeUserKey(), "streak", activeDayKey()),
       score: loadNumber(activeUserKey(), "score", activeDayKey()),
@@ -2219,7 +2240,220 @@
     let downloadWrongBtn = document.querySelector("#downloadWrong");
     let downloadStatus = document.querySelector("#downloadStatus");
 
-    function save() {
+    function setLoginStatus(text) {
+      if (loginStatus) loginStatus.textContent = text;
+    }
+
+    function progressSnapshot() {
+      return {
+        attempts: state.attempts || {},
+        wrongBook: Array.isArray(state.wrongBook) ? state.wrongBook : [],
+        masteredBook: Array.isArray(state.masteredBook) ? state.masteredBook : [],
+        selectedWords: Array.isArray(state.selectedWords) ? state.selectedWords : [],
+        score: Number(state.score) || 0,
+        streak: Number(state.streak) || 0,
+        queueIndex: Number(state.queueIndex) || 0,
+        wrongIndex: Number(state.wrongIndex) || 0
+      };
+    }
+
+    function hasProgressSnapshot(snapshot) {
+      if (!snapshot) return false;
+      return Object.keys(snapshot.attempts || {}).length > 0
+        || (snapshot.wrongBook || []).length > 0
+        || (snapshot.masteredBook || []).length > 0
+        || (snapshot.selectedWords || []).length > 0
+        || Number(snapshot.score) > 0
+        || Number(snapshot.streak) > 0
+        || Number(snapshot.queueIndex) > 0
+        || Number(snapshot.wrongIndex) > 0;
+    }
+
+    function applyProgressSnapshot(snapshot) {
+      if (!snapshot) return;
+      state.attempts = snapshot.attempts && typeof snapshot.attempts === "object" ? snapshot.attempts : {};
+      state.wrongBook = Array.isArray(snapshot.wrongBook) ? snapshot.wrongBook : [];
+      state.masteredBook = Array.isArray(snapshot.masteredBook) ? snapshot.masteredBook : [];
+      state.selectedWords = Array.isArray(snapshot.selectedWords) ? snapshot.selectedWords : [];
+      state.score = Number(snapshot.score) || 0;
+      state.streak = Number(snapshot.streak) || 0;
+      state.queueIndex = Number(snapshot.queueIndex) || 0;
+      state.wrongIndex = Number(snapshot.wrongIndex) || 0;
+      syncMasteredBook();
+    }
+
+    function cloudRowToSnapshot(row) {
+      return {
+        attempts: row?.attempts || {},
+        wrongBook: Array.isArray(row?.wrong_book) ? row.wrong_book : [],
+        masteredBook: Array.isArray(row?.mastered_book) ? row.mastered_book : [],
+        selectedWords: Array.isArray(row?.selected_words) ? row.selected_words : [],
+        score: Number(row?.score) || 0,
+        streak: Number(row?.streak) || 0,
+        queueIndex: Number(row?.current_index) || 0,
+        wrongIndex: Number(row?.wrong_index) || 0
+      };
+    }
+
+    function scheduleCloudSave() {
+      if (!CLOUD_CLIENT || !state.cloudUser || cloudLoading) return;
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => {
+        saveCloudProgress().catch(error => {
+          setLoginStatus(`云端保存失败：${error.message || "请稍后重试"}`);
+        });
+      }, 600);
+    }
+
+    async function saveCloudProgress(snapshot = progressSnapshot(), options = {}) {
+      if (!CLOUD_CLIENT || !state.cloudUser || (cloudLoading && !options.force)) return;
+      const payload = {
+        user_id: state.cloudUser.id,
+        day: dayNumber(state.day),
+        mastered_book: snapshot.masteredBook || [],
+        wrong_book: snapshot.wrongBook || [],
+        selected_words: snapshot.selectedWords || [],
+        attempts: snapshot.attempts || {},
+        score: Number(snapshot.score) || 0,
+        streak: Number(snapshot.streak) || 0,
+        current_index: Number(snapshot.queueIndex) || 0,
+        wrong_index: Number(snapshot.wrongIndex) || 0
+      };
+      const { error } = await CLOUD_CLIENT
+        .from("word_progress")
+        .upsert(payload, { onConflict: "user_id,day" });
+      if (error) throw error;
+      if (!options.silent) updateLoginStatus("已同步到云端");
+    }
+
+    async function loadCloudProfile(options = {}) {
+      if (!CLOUD_CLIENT || !state.cloudUser) return;
+      cloudLoading = true;
+      try {
+        setLoginStatus("正在同步云端记录...");
+        const { data, error } = await CLOUD_CLIENT
+          .from("word_progress")
+          .select("attempts,wrong_book,mastered_book,selected_words,score,streak,current_index,wrong_index")
+          .eq("user_id", state.cloudUser.id)
+          .eq("day", dayNumber(state.day))
+          .maybeSingle();
+        if (error) throw error;
+
+        if (data) {
+          applyProgressSnapshot(cloudRowToSnapshot(data));
+          save({ skipCloud: true });
+          render();
+          updateLoginStatus("已从云端同步");
+          return;
+        }
+
+        const starter = hasProgressSnapshot(options.fallbackSnapshot)
+          ? options.fallbackSnapshot
+          : progressSnapshot();
+        applyProgressSnapshot(starter);
+        save({ skipCloud: true });
+        await saveCloudProgress(starter, { force: true, silent: true });
+        render();
+        updateLoginStatus("已创建云端记录");
+      } catch (error) {
+        setLoginStatus(`云端同步失败，正在使用本地缓存：${error.message || "请稍后重试"}`);
+      } finally {
+        cloudLoading = false;
+      }
+    }
+
+    async function switchCloudUser(email, password) {
+      const cleanEmail = String(email || "").trim();
+      const text = String(password || "");
+      if (!cleanEmail || !text.trim()) {
+        alert("请输入邮箱和密码。第一次使用时会自动注册云端账号。");
+        return;
+      }
+      if (!CLOUD_CLIENT) {
+        alert("云端登录组件没有加载成功，请刷新页面后再试。");
+        return;
+      }
+
+      const fallbackSnapshot = progressSnapshot();
+      setLoginStatus("正在登录云端...");
+      try {
+        let result = await CLOUD_CLIENT.auth.signInWithPassword({
+          email: cleanEmail,
+          password: text
+        });
+
+        if (result.error && /invalid login credentials/i.test(result.error.message || "")) {
+          result = await CLOUD_CLIENT.auth.signUp({
+            email: cleanEmail,
+            password: text,
+            options: { emailRedirectTo: window.location.origin + window.location.pathname }
+          });
+          if (result.error) {
+            setLoginStatus(`云端注册失败：${result.error.message}`);
+            alert(`云端注册失败：${result.error.message}`);
+            return;
+          }
+          if (!result.data?.session) {
+            state.userId = cleanEmail;
+            if (userIdInput) userIdInput.value = state.userId;
+            if (passwordInput) passwordInput.value = "";
+            setLoginStatus("注册成功，请先到邮箱确认，然后再回来登录。");
+            return;
+          }
+        } else if (result.error) {
+          setLoginStatus(`云端登录失败：${result.error.message}`);
+          alert(`云端登录失败：${result.error.message}`);
+          return;
+        }
+
+        state.cloudUser = result.data.user;
+        state.userId = result.data.user?.email || cleanEmail;
+      } catch (error) {
+        setLoginStatus(`云端登录失败：${error.message || "网络暂时不可用"}`);
+        alert(`云端登录失败：${error.message || "网络暂时不可用"}`);
+        return;
+      }
+
+      if (userIdInput) userIdInput.value = state.userId;
+      if (passwordInput) passwordInput.value = "";
+
+      cloudLoading = true;
+      loadProfile();
+      cloudLoading = false;
+      save({ skipCloud: true });
+      render();
+      await loadCloudProfile({ fallbackSnapshot });
+    }
+
+    async function restoreCloudSession() {
+      if (!CLOUD_CLIENT) {
+        updateLoginStatus();
+        return;
+      }
+      let sessionResult;
+      try {
+        sessionResult = await CLOUD_CLIENT.auth.getSession();
+      } catch (error) {
+        updateLoginStatus();
+        return;
+      }
+      const { data, error } = sessionResult;
+      if (error || !data?.session?.user) {
+        updateLoginStatus();
+        return;
+      }
+      state.cloudUser = data.session.user;
+      state.userId = data.session.user.email || data.session.user.id;
+      if (userIdInput) userIdInput.value = state.userId;
+      cloudLoading = true;
+      loadProfile();
+      cloudLoading = false;
+      save({ skipCloud: true });
+      render();
+      await loadCloudProfile();
+    }
+
+    function save(options = {}) {
       try {
         localStorage.setItem("day19ActiveUser", state.userId);
         localStorage.setItem("wordPracticeActiveDay", state.day);
@@ -2235,6 +2469,7 @@
       } catch (error) {
         // The app still works when opened as a local file in strict browsers.
       }
+      if (!options.skipCloud) scheduleCloudSave();
     }
 
     function loadProfile() {
@@ -2250,10 +2485,15 @@
       syncMasteredBook();
     }
 
-    function switchUser(userId, password) {
+    async function switchUser(userId, password) {
+      if (isCloudLoginId(userId)) {
+        await switchCloudUser(userId, password);
+        return;
+      }
       if (!verifyUserPassword(userId, password)) return;
       save();
       state.userId = cleanUserId(userId);
+      state.cloudUser = null;
       loadProfile();
       if (userIdInput) userIdInput.value = state.userId;
       if (passwordInput) passwordInput.value = "";
@@ -2262,24 +2502,30 @@
       render();
     }
 
-    function updateLoginStatus() {
+    function updateLoginStatus(extra = "") {
       if (!loginStatus) return;
       const mastered = state.masteredBook?.length || 0;
       const wrong = words.filter(isWeak).length;
-      loginStatus.textContent = `已登录：${state.userId}，已掌握 ${mastered} 个，错题 ${wrong} 个`;
+      const mode = state.cloudUser ? "云端" : "本地";
+      const suffix = extra ? `，${extra}` : "";
+      loginStatus.textContent = `${mode}登录：${state.userId}，已掌握 ${mastered} 个，错题 ${wrong} 个${suffix}`;
     }
 
-    function switchDay(day) {
+    async function switchDay(day) {
       if (!wordSets[day]) return;
       save();
       state.day = day;
       state.view = "cards";
       state.filter = "all";
       state.locked = false;
+      const shouldLoadCloud = Boolean(state.cloudUser);
+      if (shouldLoadCloud) cloudLoading = true;
       loadProfile();
+      if (shouldLoadCloud) cloudLoading = false;
       updateLoginStatus();
-      save();
+      save({ skipCloud: shouldLoadCloud });
       render();
+      if (shouldLoadCloud) await loadCloudProfile();
     }
 
     function renderDayOptions() {
@@ -2974,6 +3220,7 @@
     }
 
     render();
+    restoreCloudSession();
   </script>
 </body>
 </html>
